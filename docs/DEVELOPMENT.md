@@ -4,23 +4,32 @@
 
 - Node.js `24.15.0` LTS (see `.nvmrc`)
 - npm `11` or another version compatible with the lockfile
-- PostgreSQL only when database work begins
+- Docker with Compose v2 for the bundled local PostgreSQL service
 
 ## Local setup
 
 ```bash
 nvm use
 npm ci
-npm run dev
 ```
 
-The home page and health endpoint do not require a database. Copy `.env.example` to an ignored local environment file only when running a database command or code that calls `getPrisma()`.
+Copy `.env.example` to `.env` with `cp .env.example .env` on macOS/Linux or `Copy-Item .env.example .env` in PowerShell, then run:
+
+```bash
+npm run dev:full
+```
+
+This validates Node.js, `.env`, `DATABASE_URL`, Docker, Compose, and the Docker daemon before starting PostgreSQL and Next.js. It reports all missing prerequisites together. The home page and health endpoint remain database-independent, so `npm run dev` is still available for work that does not need PostgreSQL.
 
 ## Commands
 
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Start the development server |
+| `npm run dev:full` | Validate setup, start PostgreSQL, and start the development server |
+| `npm run setup:check` | Report missing local database prerequisites |
+| `npm run db:up` | Start and wait for the local PostgreSQL service |
+| `npm run db:down` | Stop local Compose services while preserving database data |
 | `npm test` | Run the Node.js test suite |
 | `npm run lint` | Run ESLint |
 | `npm run typecheck` | Check TypeScript without emitting files |
@@ -52,6 +61,8 @@ Do not add a model or migration until the dataset and relevant domain decisions 
 4. Review generated SQL before applying it outside development.
 
 Generated Prisma Client files stay ignored and are recreated by `postinstall`.
+
+The Compose credentials are local-only. If port `5432` is already in use, stop the conflicting service or configure an external PostgreSQL instance and run `npm run dev` without Compose. If the setup check reports an unavailable daemon, start Docker Desktop or the Docker service and retry.
 
 ## Dependencies
 
