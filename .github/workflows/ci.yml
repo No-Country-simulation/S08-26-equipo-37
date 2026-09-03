@@ -52,7 +52,7 @@ jobs:
             curl --silent --show-error \
               --output /tmp/coolify-response \
               --write-out "%{http_code}" \
-              --request GET "$COOLIFY_DEPLOY_WEBHOOK" \
+              --request POST "$COOLIFY_DEPLOY_WEBHOOK" \
               --header "Authorization: Bearer $COOLIFY_TOKEN" \
               --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
               --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET"
