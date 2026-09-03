@@ -9,7 +9,7 @@ The predictive promise is not defined yet: it must be justified by the real data
 - Next.js full-stack application using the App Router
 - Server-first modular monolith
 - PostgreSQL selected through Prisma, with no speculative business models
-- Centralized optional environment validation
+- Local PostgreSQL through Docker Compose with an actionable setup check
 - Database-independent health endpoint at `GET /api/health`
 - Node.js tests and GitHub Actions validation
 
@@ -31,7 +31,7 @@ The predictive promise is not defined yet: it must be justified by the real data
 
 - Node.js from `.nvmrc`
 - npm compatible with `package-lock.json`
-- PostgreSQL only when database-backed work begins
+- Docker with Compose v2 for the bundled local PostgreSQL service
 
 ## Setup
 
@@ -40,20 +40,41 @@ git clone https://github.com/No-Country-simulation/S08-26-equipo-37.git
 cd S08-26-equipo-37
 nvm use
 npm ci
-npm run dev
 ```
 
-Open `http://localhost:3000`. Check readiness at `http://localhost:3000/api/health`.
+Create the ignored local environment file:
+
+```bash
+# macOS or Linux
+cp .env.example .env
+```
+
+```powershell
+# Windows PowerShell
+Copy-Item .env.example .env
+```
+
+Then start PostgreSQL and the application together:
+
+```bash
+npm run dev:full
+```
+
+The command reports every missing prerequisite before starting PostgreSQL. Open `http://localhost:3000` and check readiness at `http://localhost:3000/api/health`. For UI or health-endpoint work that does not need PostgreSQL, use `npm run dev` instead.
 
 ## Environment variables
 
-`DATABASE_URL` is optional until code accesses the database. For local database work, copy `.env.example` to an ignored `.env` and replace the example value. Never commit local environment files or real credentials.
+`DATABASE_URL` is required for the bundled PostgreSQL workflow. `.env.example` already matches the local Compose service; copy it without placing real credentials in the repository. An external PostgreSQL URL can be used without Docker by starting the app with `npm run dev`.
 
 ## Scripts
 
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Start local development |
+| `npm run dev:full` | Validate setup, start PostgreSQL, and start local development |
+| `npm run setup:check` | Report missing local database prerequisites |
+| `npm run db:up` | Start and wait for the local PostgreSQL service |
+| `npm run db:down` | Stop local Compose services while preserving database data |
 | `npm test` | Run tests with Node.js |
 | `npm run lint` | Run ESLint |
 | `npm run typecheck` | Run strict TypeScript checks |
