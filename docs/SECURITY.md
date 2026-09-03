@@ -7,6 +7,7 @@ This bootstrap applies only the controls justified by its current scope. Authent
 - Store secrets only in environment variables or the deployment platform's secret store.
 - Never commit `.env`, `.env.local`, database credentials, API keys, deploy webhooks, or tokens.
 - Keep `COOLIFY_DEPLOY_WEBHOOK` and `COOLIFY_TOKEN` in GitHub Actions secrets.
+- Keep `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET` in GitHub Actions secrets.
 - Never expose server variables through `NEXT_PUBLIC_*` unless their disclosure is intentional.
 
 ## Trust boundaries
