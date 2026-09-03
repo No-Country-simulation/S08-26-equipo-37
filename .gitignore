@@ -1,33 +1,61 @@
-# dependencies
-/node_modules
+# dependencies and package-manager cache
+/node_modules/
+/.npm/
 
-# next.js
+# Next.js and production output
 /.next/
 /out/
 /build/
+/dist/
 
-# testing
-/coverage
+# tests and tool caches
+/coverage/
+/.nyc_output/
+/.cache/
+/.eslintcache
 
-# environment
+# environment — keep templates versioned
 .env*
 !.env.example
+!.env.*.example
+/.direnv/
 
-# logs
+# logs and runtime files
 *.log
+*.pid
+*.pid.lock
+/report.*.json
+*.pem
 
 # deployment
-.vercel
+/.vercel/
 
-# operating systems and editors
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-
-# typescript
+# TypeScript and generated Prisma Client
 *.tsbuildinfo
 next-env.d.ts
-
-# generated code
 /src/generated/prisma/
+
+# editors
+/.idea/
+/.vscode/
+/.fleet/
+*.iml
+*.swp
+*.swo
+*~
+
+# operating systems
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# temporary local files
+/tmp/
+/temp/
+*.tmp
+*.temp
