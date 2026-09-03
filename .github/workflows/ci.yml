@@ -22,7 +22,7 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         shell: bash
         run: |
-          pattern='^(feat|fix|docs|refactor|test|chore|build|ci|perf|style)(\([a-z0-9][a-z0-9._/-]*\))?!?: [a-z0-9].+$'
+          pattern='^(feat|fix|docs|refactor|test|chore|build|ci|perf|style)(\([a-z0-9][a-z0-9._/-]*\))?!?: [A-Za-z0-9].+$'
 
           if [[ ! "$PR_TITLE" =~ $pattern ]]; then
             echo "::error::Pull request title must follow Conventional Commits."
