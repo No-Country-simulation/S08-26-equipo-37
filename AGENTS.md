@@ -70,4 +70,18 @@ Do not use this section to change the product objective, MVP scope, security pos
 
 <!-- SELF-IMPROVING:START -->
 
+- Next.js 16 maintains the `nextjs-agent-rules` block below when `next dev` runs; keep it committed so local development does not dirty the working tree.
+- `eslint-config-next@16.3.4` is not reliably compatible with ESLint 10; retain ESLint 9 until upstream support is verified.
+- Prisma packages are pinned to stable `7.10.0` because the npm `latest` tag currently targets a release candidate. Re-run Prisma checks and `npm audit` before changing the security overrides.
+
 <!-- SELF-IMPROVING:END -->
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
