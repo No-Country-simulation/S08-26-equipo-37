@@ -1,7 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { parseEnv } from "node:util";
+
+import { parse } from "dotenv";
 
 const issues = [];
 const root = process.cwd();
@@ -17,8 +18,8 @@ if (!existsSync(envPath)) {
   issues.push('Missing .env. Copy .env.example to .env first.');
 } else {
   try {
-    const databaseUrl = parseEnv(readFileSync(envPath, "utf8")).DATABASE_URL;
-    const expectedUrl = parseEnv(readFileSync(resolve(root, ".env.example"), "utf8")).DATABASE_URL;
+    const databaseUrl = parse(readFileSync(envPath, "utf8")).DATABASE_URL;
+    const expectedUrl = parse(readFileSync(resolve(root, ".env.example"), "utf8")).DATABASE_URL;
 
     if (!databaseUrl) {
       issues.push("DATABASE_URL is missing from .env.");
