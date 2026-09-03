@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:full": "npm run db:up && npm run dev",
     "build": "next build",
     "start": "next start",
     "test": "node --test",
@@ -17,6 +18,9 @@
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
+    "setup:check": "node scripts/check-local-setup.mjs",
+    "db:up": "npm run setup:check && docker compose up -d --wait --wait-timeout 60 postgres",
+    "db:down": "docker compose down",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio"
   },
