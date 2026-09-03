@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -11,6 +13,23 @@ permissions:
   contents: read
 
 jobs:
+  pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Conventional Commit title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        shell: bash
+        run: |
+          pattern='^(feat|fix|docs|refactor|test|chore|build|ci|perf|style)(\([a-z0-9][a-z0-9._/-]*\))?!?: [a-z0-9].+$'
+
+          if [[ ! "$PR_TITLE" =~ $pattern ]]; then
+            echo "::error::Pull request title must follow Conventional Commits."
+            echo "Expected: <type>(<optional-scope>): <description>"
+            exit 1
+          fi
+
   validate:
     runs-on: ubuntu-latest
     steps:
