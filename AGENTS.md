@@ -58,6 +58,8 @@ Use atomic [Conventional Commits](https://www.conventionalcommits.org/):
 
 Prefer `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`, or `style`. Do not combine unrelated changes or commit generated files, secrets, temporary outputs, or `node_modules`.
 
+Name branches with `feat/`, `fix/`, `refactor/`, `docs/`, `chore/`, or `test/` followed by a short kebab-case description, for example `feat/machine-inventory` or `fix/duplicate-alerts`.
+
 ## Documentation maintenance
 
 Update the relevant document for every important architectural decision. Add an ADR under `docs/adr/` when a decision has meaningful alternatives or lasting consequences.
