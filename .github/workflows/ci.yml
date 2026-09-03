@@ -45,7 +45,22 @@ jobs:
         env:
           COOLIFY_DEPLOY_WEBHOOK: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
-          curl --fail-with-body --silent --show-error \
-            --request GET "$COOLIFY_DEPLOY_WEBHOOK" \
-            --header "Authorization: Bearer $COOLIFY_TOKEN"
+          status_code="$(
+            curl --silent --show-error \
+              --output /tmp/coolify-response \
+              --write-out "%{http_code}" \
+              --request GET "$COOLIFY_DEPLOY_WEBHOOK" \
+              --header "Authorization: Bearer $COOLIFY_TOKEN" \
+              --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+              --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET"
+          )"
+
+          cat /tmp/coolify-response
+
+          if [[ "$status_code" != 2* ]]; then
+            echo "Coolify webhook returned HTTP $status_code" >&2
+            exit 1
+          fi
