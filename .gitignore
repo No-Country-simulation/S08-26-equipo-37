@@ -1,0 +1,33 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+/build/
+
+# testing
+/coverage
+
+# environment
+.env*
+!.env.example
+
+# logs
+*.log
+
+# deployment
+.vercel
+
+# operating systems and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# generated code
+/src/generated/prisma/
