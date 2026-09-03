@@ -37,7 +37,7 @@ jobs:
         run: npm run build
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/chore/bootstrap-project'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: validate
     runs-on: ubuntu-latest
     steps:

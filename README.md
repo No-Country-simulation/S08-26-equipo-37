@@ -87,7 +87,7 @@ No machine, sensor, reading, alert, prediction, maintenance, failure, or compone
 
 ## CI and deployment
 
-GitHub Actions runs installation, tests, lint, typecheck, and build on pull requests and relevant pushes. A successful branch push then triggers Coolify; deployment secrets remain in GitHub, never in this repository.
+GitHub Actions runs installation, tests, lint, typecheck, and build on pull requests and relevant pushes. A successful push to `main` then triggers Coolify; deployment secrets remain in GitHub, never in this repository.
 
 Deployment target: `https://predictive-maintenance.smacaya.tech`.
 
