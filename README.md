@@ -47,7 +47,7 @@ Open `http://localhost:3000`. Check readiness at `http://localhost:3000/api/heal
 
 ## Environment variables
 
-`DATABASE_URL` is optional until code accesses the database. For local database work, copy `.env.example` to an ignored `.env.local` and replace the example value. Never commit local environment files or real credentials.
+`DATABASE_URL` is optional until code accesses the database. For local database work, copy `.env.example` to an ignored `.env` and replace the example value. Never commit local environment files or real credentials.
 
 ## Scripts
 
