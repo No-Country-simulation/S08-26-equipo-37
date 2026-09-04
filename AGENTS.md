@@ -73,7 +73,7 @@ Do not use this section to change the product objective, MVP scope, security pos
 <!-- SELF-IMPROVING:START -->
 
 - Next.js 16 maintains the `nextjs-agent-rules` block below when `next dev` runs; keep it committed so local development does not dirty the working tree.
-- `eslint-config-next@16.3.4` is not reliably compatible with ESLint 10; retain ESLint 9 until upstream support is verified.
+- `eslint-config-next@16.3.4` pulls plugins that do not support ESLint 10; use `@next/eslint-plugin-next` directly with the ESLint 10-compatible configs in `eslint.config.mjs`.
 - Prisma packages are pinned to stable `7.10.0` because the npm `latest` tag currently targets a release candidate. Re-run Prisma checks and `npm audit` before changing the security overrides.
 
 <!-- SELF-IMPROVING:END -->
