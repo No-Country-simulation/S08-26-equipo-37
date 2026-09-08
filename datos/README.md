@@ -1,0 +1,80 @@
+# Mantenimiento Predictivo Industrial (PredictiveMaintenance)
+### Proyecto de Analítica Avanzada, IIoT y Machine Learning para Maquinaria de Planta
+
+Este repositorio contiene la arquitectura de datos, el diccionario oficial de variables y la guía metodológica para el desarrollo del modelo de **Mantenimiento Predictivo Industrial (MVP - Fase 1)**.
+
+El dataset ha sido optimizado para reflejar la dinámica física y operativa de una planta de mecanizado con 25 máquinas industriales monitoreadas durante 4 meses (72.000 horas de telemetría continua), incorporando anomalías reales controladas para validar el pipeline de limpieza y eliminando cualquier fuga de datos (*Data Leakage*).
+
+---
+
+## 1. Alcance del Proyecto (MVP - Fase 1)
+
+Conforme a los acuerdos de diseño y valor del negocio, el alcance de esta fase se concentra en dos pilares fundamentales:
+1. **Alerta Temprana a 48 Horas (`target_falla_48h`):** Modelo de clasificación binaria supervisado sobre sensores físicos y odómetros para anticipar si un activo sufrirá una avería dentro de las próximas 48 horas.
+2. **Matriz de Priorización Económica:** Algoritmo de toma de decisiones que jerarquiza las órdenes de trabajo considerando la probabilidad de falla predicha, la criticidad del equipo y su costo de parada por hora.
+
+*(Nota: La regresión continua de RUL fino y la validación en tiempo real con datos de planta se abordarán en la Fase 2).*
+
+---
+
+## 2. Diccionario de Variables Oficial (30 Columnas)
+
+El dataset consolidado (`dataset_mantenimiento_predictivo_realista.csv`) contiene **72.000 filas y 30 columnas** estructuradas en 6 bloques lógicos:
+
+### A. Metadatos del Activo (Catálogo de Equipos de Planta)
+1. **`fecha_hora`** *(datetime)*: Marca temporal de la lectura con frecuencia horaria (enero - abril 2026).
+2. **`id_maquina`** *(string)*: Identificador único del equipo en fábrica (`M-01` a `M-25`).
+3. **`tipo_equipo`** *(string)*: Familia funcional de máquina (Torno CNC, Centro de Mecanizado 5 Ejes, Fresadora Industrial, Rectificadora Cilíndrica/Plana, Taladro Industrial, Corte Láser Fibra, Corte Plasma HD, Sierra Cinta Industrial, Compresor de Tornillo, Sistema Hidráulico).
+4. **`modelo`** *(string)*: Denominación técnica comercial del activo (ej. *Haas ST-30*, *DMG DMU 50*, *Atlas Copco GA 75*, *Rexroth CytroBox*).
+5. **`linea_produccion`** *(string)*: Área de asignación productiva (*Linea_A_Mecanizado_Pesado*, *Linea_B_Mecanizado_Precision*, *Linea_C_Corte_Y_Perforado*, *Planta_Servicios_Auxiliares*).
+6. **`antiguedad_anos`** *(int)*: Años de servicio ininterrumpido del equipo en planta (2 a 12 años).
+7. **`criticidad`** *(string)*: Impacto sobre el flujo productivo global (*Alta*, *Media*, *Baja*).
+8. **`costo_parada_hora_usd`** *(int)*: Pérdida financiera directa por cada hora de inactividad no programada ($300 a $3.000 USD/h).
+9. **`potencia_nominal_kw`** *(float)*: Capacidad de placa instalada del motor o grupo hidráulico (4.0 a 75.0 kW).
+10. **`marca`** *(string)*: Fabricante industrial del activo (Haas, Mazak, DMG Mori, Okuma, Bridgeport, Atlas Copco, Bosch Rexroth, etc.).
+
+### B. Odómetros de Desgaste e Historial Operativo
+11. **`horas_operacion_totales`** *(int)*: Odómetro acumulado de horas efectivas en marcha a lo largo de la vida útil del equipo.
+12. **`ciclos_acumulados`** *(int)*: Conteo acumulado de piezas mecanizadas o ciclos de trabajo ejecutados.
+13. **`horas_desde_ultimo_mantenimiento`** *(int)*: Horas de funcionamiento transcurridas desde la última orden de trabajo (se reinicia a 0 tras intervenir).
+14. **`conteo_fallas_previas`** *(int)*: Historial acumulativo de paradas críticas sufridas por el equipo en el pasado.
+
+### C. Telemetría de Sensores en Tiempo Real (Variables Predictoras / IIoT)
+15. **`estado_operativo`** *(int)*: Estado funcional en la lectura (1 = máquina encendida en producción; 0 = máquina detenida por parada operativa, fin de semana o reparación).
+16. **`carga_pct`** *(float)*: Porcentaje de esfuerzo mecánico aplicado sobre el cabezal o bomba (0.0% a 100.0%).
+17. **`velocidad_rpm`** *(float)*: Velocidad de giro del husillo o motor principal (0 a 1.500 RPM).
+18. **`voltaje_v`** *(float)*: Tensión de línea trifásica (nominal ~220 V con variaciones y transitorios).
+19. **`corriente_a`** *(float)*: Consumo de corriente en Amperios (A). Aumenta con la carga y con la fricción por desgaste mecánico.
+20. **`potencia_consumida_kw`** *(float)*: Potencia activa demandada en kW ($P = \sqrt{3} \cdot V \cdot I \cdot \cos\phi$).
+21. **`temperatura_c`** *(float)*: Temperatura de rodamientos, bobinado o fluido hidráulico (°C).
+22. **`vibracion_mms`** *(float)*: Velocidad RMS de vibración global del conjunto mecánico (mm/s).
+23. **`presion_bar`** *(float)*: Presión del fluido hidráulico, lubricación o circuito neumático (bar).
+
+### D. Señales de Planta y Alarmas SCADA / PLC *(Variable de Salida / Monitoreo)*
+24. **`codigo_alarma_plc`** *(string)*: Código de advertencia registrado por el autómata de control (`SISTEMA_NORMAL`, `WARN_ANOMALIA_TENDENCIA`, `ALARM_VIB_CRITICA`, `ALARM_SOBRETEMPERATURA_MOTOR`, `ALARM_PRESION_ANORMAL`, `TRIP_PARADA_EMERGENCIA`, `ALARM_MAQUINA_APAGADA`).
+
+### E. Eventos de Avería Industrial (Disparo vs. Convalecencia)
+25. **`falla_inicio_disparo`** *(int)*: **[Evento de Disparo - 261 registros]** Marca con `1` únicamente la hora exacta en que ocurre el colapso del componente y se detiene la línea; `0` en el resto del tiempo.
+26. **`falla_estado_causa`** *(string)*: **[Estado de Convalecencia - 1.661 registros]** Causa raíz que provocó la detención (`Fallo_Rodamiento`, `Fallo_Motor_Termico`, `Fallo_Presion_Bomba`, o `Ninguna`). Permanece activa durante toda la ventana de reparación en taller.
+
+### F. Variables Objetivo para Machine Learning (Supervisión)
+27. **`target_falla_48h`** *(int)*: **[Target Principal de Clasificación Binaria]** `1` si la máquina presentará una falla dentro de las siguientes 48 horas ($t \to t+48\text{h}$); `0` si permanecerá en estado operativo normal.
+28. **`target_tipo_falla`** *(string)*: **[Target Multiclase]** Causa raíz de la falla inminente en la ventana de 48 horas (para preparación de refacciones).
+29. **`target_rul_horas`** *(float)*: **[Target de Regresión / RUL]** Horas restantes exactas de vida útil hasta el colapso. Contiene `NaN` cuando la máquina está sana (>48h).
+30. **`target_estado_salud`** *(string)*: **[Diagnóstico de Condición]** Estado operativo del activo (`Normal`, `Bajo_Observacion`, `Riesgo_Critico`, `Parada_Mantenimiento`).
+
+---
+
+## 3. Justificación Técnica: Disparo de Falla (261) vs. Convalecencia en Taller (1.661)
+
+Para evitar confusiones en los modelos y justificar la física del dataset ante los evaluadores, se distingue claramente entre **Evento** y **Estado**:
+
+```text
+Evolución Temporal de un Activo:
+[ Operación Normal ] ───> [ DISPARO DE ROTURA ] ───> [ PARADA EN TALLER (MTTR) ] ───> [ PUESTA A PUNTO ]
+                                │                                    │
+                         Hora exacta del                     Horas consecutivas
+                             colapso                       esperando repuesto/reparando
+                                │                                    │
+                    falla_inicio_disparo = 1              falla_estado_causa = "Causa"
+                        (261 eventos)                         (1.661 horas acumuladas)
