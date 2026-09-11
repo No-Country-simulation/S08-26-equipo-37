@@ -32,6 +32,7 @@ The predictive promise is not defined yet: it must be justified by the real data
 - Node.js from `.nvmrc`
 - npm compatible with `package-lock.json`
 - Docker with Compose v2 for the bundled local PostgreSQL service
+- Git LFS (`git-lfs`) for the dataset stored under `datos/`
 
 ## Setup
 
@@ -40,7 +41,11 @@ git clone https://github.com/No-Country-simulation/S08-26-equipo-37.git
 cd S08-26-equipo-37
 nvm use
 npm ci
+git lfs install
+git lfs pull
 ```
+
+The dataset under `datos/` is stored with **Git LFS**. Without `git-lfs`, the CSV appears as a three-line pointer instead of the file (see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md#dataset-git-lfs)).
 
 Create the ignored local environment file:
 
