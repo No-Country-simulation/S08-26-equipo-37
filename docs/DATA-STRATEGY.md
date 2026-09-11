@@ -25,6 +25,7 @@ No se diseñará el modelo de dominio final ni se elegirá una salida predictiva
 - Separar datos de entrenamiento, validación y prueba respetando tiempo y equipos para evitar fuga de información.
 - Empezar con el baseline más simple que responda la pregunta elegida y compararlo contra una referencia operativa.
 - No crear tablas de negocio a partir de nombres de columnas hipotéticos.
+- El dataset vive en **Git LFS** (`datos/`) y su integridad se verifica con `npm run data:validate`: el chequeo falla si el archivo es un puntero LFS y valida columnas, filas, máquinas, positivos y duplicados. En CI lo ejecuta el workflow **Dataset**, que hace checkout con `lfs: true` y solo se dispara cuando cambian el dataset o el propio validador. Al cambiar la versión del dataset hay que actualizar las constantes del validador (y registrarlo acá).
 
 ## Inventario mínimo antes de modelar
 

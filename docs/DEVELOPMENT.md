@@ -28,6 +28,7 @@ This validates Node.js, `.env`, `DATABASE_URL`, Docker, Compose, and the Docker 
 | `npm run dev` | Start the development server |
 | `npm run dev:full` | Validate setup, start PostgreSQL, and start the development server |
 | `npm run setup:check` | Report missing local database prerequisites |
+| `npm run data:validate` | Validate dataset integrity (fails when the file is a Git LFS pointer) |
 | `npm run db:up` | Start and wait for the local PostgreSQL service |
 | `npm run db:down` | Stop local Compose services while preserving database data |
 | `npm test` | Run the Node.js test suite |
