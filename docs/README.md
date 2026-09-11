@@ -13,7 +13,7 @@
 | [`PRODUCT.md`](./PRODUCT.md) | Hechos, hipótesis, decisiones abiertas y fuera de alcance | Existe — **actualizar** con las decisiones del 10/09 ([#25](../../issues/25)) |
 | [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) | Parámetros del MVP: target, features, partición, métrica, umbral, prioridad (plantilla de [#12](../../issues/12)) | **Nuevo** — se completa en el sprint meet |
 | [`ROADMAP.md`](./ROADMAP.md) | Fases F0–F8 con criterio de salida | Existe |
-| [`SCOPE.md`](./SCOPE.md) | Alcance, fundamentos de planta y decisiones aprobadas del MVP (documento principal) | **Nuevo** |
+| `SCOPE.md` | Alcance + fundamentos de dominio + decisiones aprobadas (fusión de los documentos ALIGN) | **Etapa 2** |
 
 ## Datos
 
@@ -22,15 +22,15 @@
 | [`DATA-STRATEGY.md`](./DATA-STRATEGY.md) | Regla rectora, inventario mínimo, tipos de problema, integridad del dataset | Existe — **actualizar** ([#25](../../issues/25)) |
 | [`../datos/README.md`](../datos/README.md) | Diccionario oficial de las 30 columnas del dataset | Existe (Dutaya) |
 | [`../datos/script_generacion_de_datos.ipynb`](../datos/script_generacion_de_datos.ipynb) | Generador reproducible (SEED = 42) con la ground truth de anomalías | Existe (Dutaya) |
-| [`DOMAIN-ONTOLOGY.md`](./DOMAIN-ONTOLOGY.md) | Taxonomía PdM: activos, variables, canales, modos de falla, estados, criticidad | **Nuevo** |
+| `DOMAIN-ONTOLOGY.md` | Taxonomía PdM: activos, variables, canales, modos de falla, estados, criticidad | **Etapa 2** |
 
 ## Arquitectura y modelo de datos
 
 | Documento | Qué contiene | Estado |
 | --- | --- | --- |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Monolito modular server-first, flujos de request, límites | Existe |
-| [`adr/`](./adr/) | Decisiones de arquitectura: 0001 monolito modular · 0002 Prisma/PostgreSQL · 0003 server-first · 0004 sin tiempo real prematuro · **0005 convención de documentación** | Existe |
-| [`DATA-MODEL.md`](./DATA-MODEL.md) | Esquema conceptual E-R, mapeo del dataset a entidades y flujo de trazabilidad | **Nuevo** |
+| [`adr/`](./adr/) | Decisiones de arquitectura (ADR) | Existe — se agregan nuevos por decisión |
+| `DATA-MODEL.md` | Esquema conceptual E-R y mapeo dataset → entidades | **Etapa 2** |
 | [`SECURITY.md`](./SECURITY.md) | Fronteras de confianza, secretos, base de datos | Existe |
 
 ## Trabajo y proceso
