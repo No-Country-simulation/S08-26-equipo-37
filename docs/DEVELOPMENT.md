@@ -5,12 +5,15 @@
 - Node.js `24.15.0` LTS (see `.nvmrc`)
 - npm `11` or another version compatible with the lockfile
 - Docker with Compose v2 for the bundled local PostgreSQL service
+- Git LFS (`git-lfs`) for the dataset stored under `datos/`
 
 ## Local setup
 
 ```bash
 nvm use
 npm ci
+git lfs install
+git lfs pull
 ```
 
 Copy `.env.example` to `.env` with `cp .env.example .env` on macOS/Linux or `Copy-Item .env.example .env` in PowerShell, then run:
@@ -20,6 +23,36 @@ npm run dev:full
 ```
 
 This validates Node.js, `.env`, `DATABASE_URL`, Docker, Compose, and the Docker daemon before starting PostgreSQL and Next.js. It reports all missing prerequisites together. The home page and health endpoint remain database-independent, so `npm run dev` is still available for work that does not need PostgreSQL.
+
+## Dataset (Git LFS)
+
+`datos/dataset_mantenimiento_predictivo_realista.csv` is stored with **Git LFS** (see `.gitattributes`). Without `git-lfs` installed, a clone, a repository ZIP download and `raw.githubusercontent.com` all return a three-line **pointer** instead of the CSV:
+
+```
+version https://git-lfs.github.com/spec/v1
+oid sha256:c0614c789eef72d937a93767be22bb73ff5e32fda82ba7e97ca40ad3b383bcac
+size 16768593
+```
+
+Install once per machine and pull the objects:
+
+```bash
+sudo pacman -S git-lfs   # Arch / EndeavourOS
+# sudo apt install git-lfs   # Debian / Ubuntu
+# brew install git-lfs       # macOS
+
+git lfs install   # once per user
+git lfs pull      # download the real file contents
+```
+
+Quick checks:
+
+```bash
+wc -c datos/dataset_mantenimiento_predictivo_realista.csv    # 16768593 (a pointer is ~133 bytes)
+head -1 datos/dataset_mantenimiento_predictivo_realista.csv  # fecha_hora,id_maquina,...
+```
+
+If you only need the file and cannot install LFS, open it in the GitHub web UI and use **Download raw file**: that link serves the real content.
 
 ## Commands
 
