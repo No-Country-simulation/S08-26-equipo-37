@@ -45,6 +45,20 @@ La exploración debe responder y dejar documentado:
 
 El primer entregable de datos será un diccionario y un perfil de calidad. Recién entonces se propondrán el contrato de ingestión y el esquema persistente mínimo.
 
+## Datasets de control disponibles
+
+No hay datos reales de la empresa: el MVP se desarrolla sobre el **dataset sintético del equipo** ([`datos/README.md`](../datos/README.md)) y se compara contra datasets públicos.
+
+| Fuente | Qué aporta | Uso previsto |
+| --- | --- | --- |
+| [AI4I 2020 — Predictive Maintenance Dataset](https://www.kaggle.com/datasets/stephanmatzka/predictive-maintenance-dataset-ai4i-2020) | Telemetría tabular con modos de falla etiquetados | Control de cordura del baseline 48 h |
+| [Machine Failure Predictions](https://www.kaggle.com/datasets/shashanknecrothapa/machine-failure-predictions) | Lecturas de sensores con fallas | Feature engineering y clasificación |
+| [Equipment Failure Prediction Dataset](https://www.kaggle.com/datasets/geetanjalisikarwar/equipment-failure-prediction-dataset) | Fallas de equipos con contexto operativo | Comparación de enfoques |
+| [NASA C-MAPSS](https://www.kaggle.com/datasets/behrad3d/nasa-cmaps) | Trayectorias de degradación con RUL | Referencia de RUL (fase 2) |
+| [Google Dataset Search](https://datasetsearch.research.google.com/) | Búsqueda: rodamientos / motores eléctricos con vibración y diagnóstico de fallas | Exploración de fuentes adicionales |
+
+**Regla:** los datasets públicos son **control**, no fuente de verdad. El dataset del proyecto define qué promesa predictiva puede hacer el MVP.
+
 ## Problemas predictivos diferentes
 
 | Problema | Pregunta que responde | Evidencia mínima | Lo que no implica |

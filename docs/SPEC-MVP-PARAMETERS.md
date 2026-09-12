@@ -140,3 +140,34 @@ npm run data:validate     # valida el dataset (falla si es un puntero LFS)
 - Diccionario oficial: [`datos/README.md`](../datos/README.md) · Generador reproducible: [`datos/script_generacion_de_datos.ipynb`](../datos/script_generacion_de_datos.ipynb) (SEED = 42)
 - Guía del backlog: [`BACKLOG.md`](./BACKLOG.md) · Estrategia de datos: [`DATA-STRATEGY.md`](./DATA-STRATEGY.md)
 - Issues relacionados: [#10](../../issues/10) · [#11](../../issues/11) · [#13](../../issues/13) · [#14](../../issues/14) · [#15](../../issues/15) · [#25](../../issues/25)
+
+---
+
+## Anexo B — Preguntas clave del MVP (registro histórico)
+
+Estado al 2026-09-10 (✅ cerrada por contexto o datos · 🟡 propuesta del equipo · 🔴 requiere información externa). Las respuestas 🟡 se confirman en los bloques §1–§10.
+
+| # | Pregunta | Respuesta | Estado |
+| --- | --- | --- | --- |
+| 1 | ¿Quién es el usuario principal? | Responsable/líder de mantenimiento | ✅ |
+| 2 | ¿Qué decisión concreta debe poder tomar? | "¿A qué máquina intervengo y en qué orden?" | ✅ |
+| 3 | ¿Qué familia de máquinas? | Mecanizado líneas A/B (tornos, CNC, fresadoras) | 🟡 (§1) |
+| 4 | ¿Cuál es el modo de falla objetivo? | Binario "falla en 48 h"; profundizar Fallo_Rodamiento | 🟡 (§2) |
+| 5 | ¿Qué significa exactamente "falla"? | Disparo (`falla_inicio_disparo`) vs. convalecencia en taller | ✅ (§3) |
+| 6 | ¿Predicción por máquina o por componente? | Por máquina (máquina-hora) | ✅ (§1) |
+| 7 | ¿Existe un dataset real? | No; hay públicos de control | ✅ |
+| 8 | ¿Cuántas fallas etiquetadas hay? | 261 disparos · 1.661 horas en taller · 7.623 ventanas de 48 h | ✅ |
+| 9 | ¿Se muestra anomalía, riesgo o probabilidad? | Estado de salud + probabilidad 48 h + prioridad | 🟡 (§8) |
+| 10 | ¿Cuál es el horizonte? | 48 h (único etiquetado) | ✅ (§2) |
+| 11 | ¿Cada cuánto se actualiza? | Diaria (datos horarios, ventana móvil) | 🟡 (§9) |
+| 12 | ¿Cómo se configura la criticidad? | Columna del dataset + costo de parada editable | 🟡 (§8) |
+| 13 | ¿Cómo se calcula la prioridad? | P(48h) × criticidad × costo de parada normalizado | 🟡 (§8) |
+| 14 | ¿Qué acción se espera por nivel? | Normal: sin acción · Observación: monitorear · Riesgo: intervenir ≤48 h · Parada: en mantenimiento | 🟡 (§1) |
+| 15 | ¿Estados de una alerta? | Abierta → En evaluación → Planificada → En ejecución → Cerrada | 🟡 (§9) |
+| 16 | ¿Cómo se registra si la alerta fue correcta? | Resultado al cerrar + contraste con el evento real | 🟡 (§9) |
+| 17 | ¿Qué métricas definen el éxito? | Recall ≥ 70–80 %, falsos positivos acotados, comparación vs. calendario | 🟡 (§8) |
+| 18 | ¿Qué queda fuera del MVP? | RUL fino, por componente, CMMS real, datos reales, retraining, series irregulares | ✅ (§10) |
+| 19 | ¿La demo usa datos reales, públicos o simulados? | Simulados (dataset del equipo) | ✅ |
+| 20 | ¿Quién valida desde el conocimiento industrial? | Rol a asignar (candidato: Dutaya) | 🔴 ([#24](../../issues/24)) |
+
+> Bloque 🔴 pendiente: asignar el **validador industrial** ([#24](../../issues/24)). El resto queda cerrado al completar §1–§10.
