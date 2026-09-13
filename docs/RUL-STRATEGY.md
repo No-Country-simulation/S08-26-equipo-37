@@ -51,6 +51,26 @@ El MVP aprobado predice **una sola cosa**: ¿esta máquina falla en las próxima
 | **Bajo observación** | 0,0076 | 0,9860 | 0,0065 | 0 | 0 |
 | **Riesgo crítico** | 0 | 0 | 0,9785 | 0 | **0,0215** |
 | **Parada** | 0 | 0 | 0 | 0,9071 | 0,0929 |
+| **FALLA** | 0 | 0,4598 | 0,0383 | 0,5019 | 0 |
+
+> ⚠️ **Cómo leer la última fila (importante).** En los datos, `FALLA` **no es un estado final**: la máquina se repara y vuelve a servicio. Hay **261 transiciones que salen de `FALLA`** (131 a Parada, 120 a Bajo observación, 10 a Riesgo). Cuando más abajo calculamos "horas hasta la falla", tratamos a `FALLA` como punto de corte **solo a los fines del cálculo**: los números son **horas hasta la PRÓXIMA falla**, no una vida útil definitiva.
+
+> 🔎 **Dato estructural**: las 261 fallas provienen de **solo dos estados** — `Riesgo crítico` (131) y `Parada` (130). Nunca directamente desde `Normal` ni desde `Bajo observación`.
+
+**Cuántos datos sostienen cada transición** (no todas pesan igual — los conteos crudos):
+
+| Transición | Casos observados |
+| --- | --- |
+| Normal → Normal | 45.326 |
+| Parada → Parada | 1.269 |
+| **Normal → Bajo observación** | **154** |
+| Bajo observación → Normal | 142 |
+| **Riesgo crítico → FALLA** | **131** |
+| Parada → FALLA | 130 |
+| Bajo observación → Riesgo crítico | 121 |
+| Bajo observación → Bajo observación | 18.479 |
+
+Las transiciones que **importan para el riesgo** (las que llevan a `FALLA`, 131 y 130 casos) se apoyan en **~130 observaciones**: eso da un margen de error aproximado de **±9 puntos porcentuales** (95 % de confianza). Es decir: "2,15 % por hora" es una estimación, no un valor exacto.
 
 Aplicando esa tabla varias veces seguidas (como repetir un cálculo hora tras hora) se obtiene:
 
@@ -109,6 +129,9 @@ La probabilidad de salir de `Normal` según el tiempo que lleva ahí:
 | Horas en Normal | 1 | 3 | 8 | 12 |
 | --- | --- | --- | --- | --- |
 | Probabilidad de salir esa hora | **0,162** | 0,047 | 0,018 | **0,000** |
+| Casos observados (salidas / veces en ese punto) | 27 / 167 | 6 / 128 | 2 / 111 | 0 / 104 |
+
+> ⚠️ **Precisión**: el valor de la primera hora (0,162) se apoya en **27 casos**. Con ese tamaño, el margen de error es de aproximadamente **±11 puntos** (95 % de confianza): el hallazgo cualitativo ("la probabilidad baja con el tiempo en la etapa") es sólido, pero el número exacto no lo es.
 
 Una cadena "clásica" supone que esa probabilidad es **constante**. Los datos dicen que **depende del tiempo en la etapa** (y por eso el modelo subestima `Riesgo crítico` en 35 puntos). La versión que sí lo tiene en cuenta se llama **semi-Markov** (Markov + "hace cuánto que estoy acá").
 
@@ -228,7 +251,25 @@ Un horizonte extendido mal calibrado es peor que no tenerlo: si dice 56 % y fall
 
 ---
 
-## 12. Anexo — Glosario mínimo y material
+## 12. Limitaciones del análisis
+
+Este análisis es **exploratorio**. Antes de usarlo para decidir algo en producción, hay que tener presentes estos límites:
+
+| Limitación | Qué implica |
+| --- | --- |
+| **Los estados provienen de una etiqueta del dataset** | La cadena describe la **dinámica de esa etiqueta**, no un fenómeno observable en planta. Es la razón del Hallazgo A: hay que deducir el estado de los sensores |
+| **`FALLA` no es un estado final en los datos** | La máquina se repara y vuelve a servicio (261 transiciones de salida). Los tiempos calculados son **hasta la próxima falla**, con la cadena cortada en ese punto a los fines del cálculo |
+| **Muestras chicas** | Las transiciones que importan (hacia `FALLA`) tienen ~130 casos → **±9 pp**; el hazard de la primera hora tiene **27 casos** → **±11 pp**. Sirven para el orden de magnitud, no para decimales |
+| **Cadena homogénea** | No distingue por máquina, antigüedad, carga ni criticidad (se probó por criticidad: los tiempos son casi iguales). De ahí el Hallazgo B |
+| **Dataset sintético** | Mide **factibilidad del método** y permite validar contra la estructura conocida del generador (semilla 42); **no** demuestra desempeño en una planta real |
+| **Sin costos de intervención** | El dataset tiene costo de parada (300–3.000 USD/h) pero **no** costo de reparación planificada: el "costo de esperar" de §7 es ilustrativo |
+| **Cifras redondeadas** | El documento redondea a 2 decimales (%, probabilidades); el informe reproducible (`analisis/informe-markov.md`) conserva más precisión |
+
+**Convención de números en este documento**: decimales con **coma** y miles con **punto** (formato en español). El informe del script usa la misma convención desde esta revisión.
+
+---
+
+## 13. Anexo — Glosario mínimo y material
 
 | Término | En criollo |
 | --- | --- |
