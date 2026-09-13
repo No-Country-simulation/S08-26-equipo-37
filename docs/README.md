@@ -14,6 +14,7 @@
 | [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) | Parámetros del MVP: target, features, partición, métrica, umbral, prioridad (plantilla de [#12](../../issues/12)) | **Nuevo** — se completa en el sprint meet |
 | [`ROADMAP.md`](./ROADMAP.md) | Fases F0–F8 con criterio de salida | Existe |
 | [`SCOPE.md`](./SCOPE.md) | Alcance, fundamentos de planta y decisiones aprobadas del MVP (documento principal) | **Nuevo** |
+| [`RUL-STRATEGY.md`](./RUL-STRATEGY.md) | Potencial del **RUL extendido** (horizontes de 7/30/90 días) y estrategia de parámetros para un MVP más sofisticado | **Nuevo** — propuesta para decisión |
 
 ## Datos
 
