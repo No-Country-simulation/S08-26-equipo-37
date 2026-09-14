@@ -389,7 +389,7 @@ export function MobileCommandCenter() {
           <section aria-labelledby="mobile-machines-title">
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-teal-300">Inventario resumido</p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight text-white" id="mobile-machines-title">Máquinas</h1>
-            <div aria-label="Filtrar máquinas por estado" className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-2">
+            <div aria-label="Filtrar máquinas por estado" className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {filters.map((filter) => (
                 <button
                   aria-pressed={statusFilter === filter.value}
