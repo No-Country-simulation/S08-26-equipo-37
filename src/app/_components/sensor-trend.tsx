@@ -1,4 +1,4 @@
-import type { SensorTrend as SensorTrendData } from "../_data/dashboard";
+import type { SensorTrend as SensorTrendData } from "@/features/maintenance/types";
 import { scaleTrendPoints } from "./trend-scale";
 
 const toneStyles: Record<SensorTrendData["tone"], string> = {
