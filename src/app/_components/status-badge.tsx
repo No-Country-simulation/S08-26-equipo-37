@@ -1,4 +1,4 @@
-import type { HealthStatus } from "../_data/dashboard";
+import type { HealthStatus } from "@/features/maintenance/types";
 
 const statusStyles: Record<HealthStatus, string> = {
   critical: "border-rose-400/20 bg-rose-400/10 text-rose-200",

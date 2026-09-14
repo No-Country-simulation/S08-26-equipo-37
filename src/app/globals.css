@@ -16,7 +16,6 @@ html {
 
 body {
   margin: 0;
-  min-width: 320px;
   background:
     radial-gradient(circle at 12% -8%, rgb(45 212 191 / 10%), transparent 28rem),
     radial-gradient(circle at 88% 12%, rgb(56 189 248 / 7%), transparent 24rem),
