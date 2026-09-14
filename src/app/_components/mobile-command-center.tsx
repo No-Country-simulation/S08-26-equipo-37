@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   activityEvents,
@@ -33,7 +34,7 @@ type MobileTab = (typeof tabs)[number]["id"];
 
 const filters: readonly { label: string; value: MachineStatusFilter }[] = [
   { label: "Todas", value: "all" },
-  { label: "Críticas", value: "critical" },
+  { label: "Riesgo crítico", value: "critical" },
   { label: "Observación", value: "watch" },
   { label: "Normales", value: "healthy" },
   { label: "Mantenimiento", value: "maintenance" },
@@ -45,6 +46,8 @@ const statusTone: Record<HealthStatus, string> = {
   healthy: "border-emerald-300/25 bg-emerald-300/10 text-emerald-100",
   maintenance: "border-sky-300/25 bg-sky-300/10 text-sky-100",
 };
+
+const actionStyle = "inline-flex min-h-11 items-center rounded-lg px-2 text-xs font-semibold text-teal-200 transition hover:bg-white/[0.06] hover:text-white active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300";
 
 const dateTime = new Intl.DateTimeFormat("es-AR", {
   day: "2-digit",
@@ -107,9 +110,25 @@ function SnapshotTime({ value }: { value: string }) {
   return <time dateTime={value}>{dateTime.format(new Date(value))}</time>;
 }
 
-function AlertCard({ alert }: { alert: Alert }) {
-  const machine = machines.find((item) => item.id === alert.machineId);
+function tabFromLocation(): MobileTab {
+  const requestedTab = new URLSearchParams(window.location.search).get("view");
+  return tabs.find((tab) => tab.id === requestedTab)?.id ?? "summary";
+}
 
+function MachineReference({ machineId, source = "mobile-alerts" }: { machineId: string; source?: "mobile-alerts" | "mobile-activity" }) {
+  const machine = machines.find((item) => item.id === machineId);
+
+  return (
+    <Link
+      className={actionStyle}
+      href={`/machines/${machineId}?from=${source}`}
+    >
+      Ver {machineId}{machine ? ` · ${machine.name}` : ""} →
+    </Link>
+  );
+}
+
+function AlertCard({ alert }: { alert: Alert }) {
   return (
     <article className={`rounded-2xl border p-4 ${severityStyle(alert.severity)}`}>
       <div className="flex items-start justify-between gap-3">
@@ -122,8 +141,8 @@ function AlertCard({ alert }: { alert: Alert }) {
         <span className="shrink-0 text-xs text-slate-300"><SnapshotTime value={alert.timestamp} /></span>
       </div>
       <p className="mt-2 text-sm leading-6 text-slate-200">{alert.description}</p>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3 text-xs">
-        <span className="font-medium text-slate-200">{machine ? `${machine.id} · ${machine.name}` : alert.machineId}</span>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2 text-xs">
+        <MachineReference machineId={alert.machineId} />
         <span className="rounded-full bg-black/15 px-2 py-1 text-slate-300">{displayValue(alert.status)}</span>
       </div>
     </article>
@@ -133,14 +152,14 @@ function AlertCard({ alert }: { alert: Alert }) {
 function MachineCard({ machine }: { machine: Machine }) {
   return (
     <article className="overflow-hidden rounded-2xl border border-white/10 bg-[#0f1c2c]">
-      <div className="grid grid-cols-[6.75rem_minmax(0,1fr)] gap-4 p-4">
+      <div className="grid grid-cols-[5.75rem_minmax(0,1fr)] gap-4 p-4 sm:grid-cols-[6.75rem_minmax(0,1fr)]">
         <MachineVisual className="h-24 w-full rounded-xl" label={`${machine.type} ${machine.name}`} visual={machine.visual} />
         <div className="min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="font-mono text-xs font-semibold text-teal-300">{machine.id}</p>
-              <h3 className="mt-1 truncate text-base font-semibold text-white">{machine.name}</h3>
-              <p className="mt-1 truncate text-xs text-slate-400">{machine.sector}</p>
+              <h3 className="mt-1 break-words text-base font-semibold text-white">{machine.name}</h3>
+              <p className="mt-1 break-words text-xs text-slate-400">{machine.sector}</p>
             </div>
             <div className="shrink-0 text-right">
               <data aria-label={`Índice de atención simulado: ${machine.riskScore} de 100`} className="text-2xl font-semibold tabular-nums text-white" value={machine.riskScore}>
@@ -157,7 +176,15 @@ function MachineCard({ machine }: { machine: Machine }) {
       </div>
       <div className="border-t border-white/[0.07] px-4 py-3">
         <p className="text-sm leading-5 text-slate-300">{machine.summary}</p>
-        <p className="mt-2 text-xs text-slate-500">Snapshot <SnapshotTime value={machine.updatedAt} /></p>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-1">
+          <p className="text-xs text-slate-400">Actualizada <SnapshotTime value={machine.updatedAt} /></p>
+          <Link
+            className={actionStyle}
+            href={`/machines/${machine.id}?from=mobile-machines`}
+          >
+            Ver detalle →
+          </Link>
+        </div>
       </div>
     </article>
   );
@@ -195,30 +222,42 @@ function NotificationCenter({
         </div>
 
         <ul className="mt-4 grid gap-2">
-          {items.map((item) => (
-            <li className={`rounded-xl border p-3 ${item.read ? "border-white/[0.07] bg-white/[0.025]" : "border-teal-300/20 bg-teal-300/[0.055]"}`} key={item.id}>
-              <div className="flex items-start gap-3">
-                <span aria-hidden="true" className={`mt-1.5 size-2 shrink-0 rounded-full ${item.read ? "bg-slate-600" : "bg-teal-300"}`} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm font-semibold text-white">{item.title}</p>
-                    <span className="shrink-0 text-xs text-slate-400"><SnapshotTime value={item.timestamp} /></span>
+          {items.map((item) => {
+            const machine = machines.find((candidate) => candidate.id === item.machineId);
+
+            return (
+              <li className={`rounded-xl border p-3 ${item.read ? "border-white/[0.07] bg-white/[0.025]" : "border-teal-300/20 bg-teal-300/[0.055]"}`} key={item.id}>
+                <div className="flex items-start gap-3">
+                  <span aria-hidden="true" className={`mt-1.5 size-2 shrink-0 rounded-full ${item.read ? "bg-slate-600" : "bg-teal-300"}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-semibold text-white">{item.title}</p>
+                      <span className="shrink-0 text-xs text-slate-400"><SnapshotTime value={item.timestamp} /></span>
+                    </div>
+                    <p className="mt-1 text-sm leading-5 text-slate-300">{item.message}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      <Link
+                        className={actionStyle}
+                        href={`/machines/${item.machineId}?from=mobile-summary`}
+                      >
+                        Ver {item.machineId}{machine ? ` · ${machine.statusLabel}` : ""} →
+                      </Link>
+                      {!item.read ? (
+                        <button
+                          className={actionStyle}
+                          onClick={() => onRead(item.id)}
+                          type="button"
+                        >
+                          Marcar como leída
+                          <span className="sr-only">: {item.title}</span>
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
-                  <p className="mt-1 text-sm leading-5 text-slate-300">{item.message}</p>
-                  {!item.read ? (
-                    <button
-                      className="mt-2 min-h-11 rounded-lg px-2 text-xs font-semibold text-teal-200"
-                      onClick={() => onRead(item.id)}
-                      type="button"
-                    >
-                      Marcar como leída
-                      <span className="sr-only">: {item.title}</span>
-                    </button>
-                  ) : null}
                 </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       </div>
     </section>
@@ -233,10 +272,51 @@ export function MobileCommandCenter() {
   const unreadCount = notificationItems.filter((item) => !item.read).length;
   const filteredMachines = useMemo(() => filterMachinesByStatus(machines, statusFilter), [statusFilter]);
   const criticalMachines = priorityMachines.filter((machine) => machine.status === "critical").slice(0, 3);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!notificationsOpen) return;
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setNotificationsOpen(false);
+      notificationButtonRef.current?.focus();
+    }
+
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [notificationsOpen]);
+
+  useEffect(() => {
+    function restoreTab() {
+      setNotificationsOpen(false);
+      setActiveTab(tabFromLocation());
+      if (window.matchMedia("(max-width: 79.999rem)").matches) {
+        window.scrollTo({ behavior: "instant", top: 0 });
+      }
+    }
+
+    const frame = window.requestAnimationFrame(restoreTab);
+    window.addEventListener("popstate", restoreTab);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("popstate", restoreTab);
+    };
+  }, []);
 
   function openTab(tab: MobileTab) {
     setNotificationsOpen(false);
+    if (tab !== activeTab) {
+      window.history.pushState(null, "", tab === "summary" ? "/" : `/?view=${tab}`);
+    }
     setActiveTab(tab);
+    window.scrollTo({ behavior: "instant", top: 0 });
+  }
+
+  function toggleNotifications() {
+    const nextOpen = !notificationsOpen;
+    setNotificationsOpen(nextOpen);
+    if (nextOpen) window.scrollTo({ behavior: "instant", top: 0 });
   }
 
   return (
@@ -253,7 +333,7 @@ export function MobileCommandCenter() {
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-white">PredictiveMaintenance</p>
-              <p className="truncate text-xs text-slate-400">Supervisión remota · Líneas A y B</p>
+              <p className="truncate text-xs text-slate-400">Corte · 27 abr 2026 · 10:00</p>
             </div>
           </div>
 
@@ -262,7 +342,8 @@ export function MobileCommandCenter() {
             aria-expanded={notificationsOpen}
             aria-label={`Notificaciones: ${unreadCount} sin leer`}
             className="relative grid size-11 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-200"
-            onClick={() => setNotificationsOpen((open) => !open)}
+            onClick={toggleNotifications}
+            ref={notificationButtonRef}
             type="button"
           >
             <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24">
@@ -281,7 +362,7 @@ export function MobileCommandCenter() {
       </header>
 
       <span aria-live="polite" className="sr-only">
-        {unreadCount} notificaciones sin leer
+        Vista {tabs.find((tab) => tab.id === activeTab)?.label}. {unreadCount} notificaciones sin leer.
       </span>
 
       {notificationsOpen ? (
@@ -292,7 +373,7 @@ export function MobileCommandCenter() {
         />
       ) : null}
 
-      <div className="mx-auto max-w-2xl px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-6" id="mobile-content" tabIndex={-1}>
+      <div className="mx-auto max-w-2xl scroll-mt-28 px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-6" id="mobile-content" tabIndex={-1}>
         {activeTab === "summary" ? (
           <div className="grid gap-7">
             <section aria-labelledby="mobile-summary-title">
@@ -306,7 +387,7 @@ export function MobileCommandCenter() {
 
               <dl className="mt-5 grid grid-cols-2 gap-3">
                 <div className="rounded-2xl border border-rose-300/20 bg-rose-300/[0.07] p-4">
-                  <dt className="text-xs font-medium text-rose-100">Críticas</dt>
+                  <dt className="text-xs font-medium text-rose-100">Riesgo crítico</dt>
                   <dd className="mt-2 text-3xl font-semibold text-white">{dashboardSummary.counts.critical}</dd>
                 </div>
                 <div className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.07] p-4">
@@ -343,7 +424,7 @@ export function MobileCommandCenter() {
               <div className="flex items-end justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-300">Prioridad</p>
-                  <h2 className="mt-1 text-xl font-semibold text-white" id="mobile-critical-machines">Máquinas críticas</h2>
+                  <h2 className="mt-1 text-xl font-semibold text-white" id="mobile-critical-machines">Máquinas en riesgo crítico</h2>
                 </div>
                 <button className="min-h-11 px-1 text-sm font-semibold text-teal-200" onClick={() => openTab("machines")} type="button">
                   Ver equipos
@@ -367,6 +448,7 @@ export function MobileCommandCenter() {
                       <span className="shrink-0 text-xs text-slate-400"><SnapshotTime value={event.timestamp} /></span>
                     </div>
                     <p className="mt-1 text-sm leading-5 text-slate-400">{event.detail}</p>
+                    <MachineReference machineId={event.machineId} source="mobile-activity" />
                   </li>
                 ))}
               </ul>
@@ -389,7 +471,7 @@ export function MobileCommandCenter() {
           <section aria-labelledby="mobile-machines-title">
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-teal-300">Inventario resumido</p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight text-white" id="mobile-machines-title">Máquinas</h1>
-            <div aria-label="Filtrar máquinas por estado" className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div aria-label="Filtrar máquinas por estado" className="mt-4 flex flex-wrap gap-2 pb-2" role="group">
               {filters.map((filter) => (
                 <button
                   aria-pressed={statusFilter === filter.value}
@@ -402,7 +484,9 @@ export function MobileCommandCenter() {
                 </button>
               ))}
             </div>
-            <p aria-live="polite" className="mt-1 text-xs text-slate-400">{filteredMachines.length} equipos visibles</p>
+            <p aria-live="polite" className="mt-1 text-xs text-slate-400">
+              {filteredMachines.length === 1 ? "1 equipo visible" : `${filteredMachines.length} equipos visibles`}
+            </p>
             <div className="mt-4 grid gap-3">
               {filteredMachines.map((machine) => <MachineCard key={machine.id} machine={machine} />)}
             </div>
@@ -423,6 +507,7 @@ export function MobileCommandCenter() {
                     <span className="shrink-0 text-xs text-slate-400"><SnapshotTime value={event.timestamp} /></span>
                   </div>
                   <p className="mt-1 text-sm leading-6 text-slate-400">{event.detail}</p>
+                  <MachineReference machineId={event.machineId} source="mobile-activity" />
                 </li>
               ))}
             </ol>

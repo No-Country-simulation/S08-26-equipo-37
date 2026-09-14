@@ -11,7 +11,7 @@ const number = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 
 export function SensorTrend({ trend }: { trend: SensorTrendData }) {
   const change = `${trend.change > 0 ? "+" : ""}${number.format(trend.change)}%`;
-  const description = `${trend.label}: ${number.format(trend.value)} ${trend.unit}. Cambio de ${change}. Evolución normalizada de las últimas 12 horas.`;
+  const description = `${trend.label}: ${number.format(trend.value)} ${trend.unit}. Cambio de ${change}. Evolución normalizada de lecturas recientes simuladas.`;
   const scaledPoints = scaleTrendPoints(trend.points);
 
   return (
@@ -42,9 +42,9 @@ export function SensorTrend({ trend }: { trend: SensorTrendData }) {
       </div>
 
       <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-400">
-        <span>Hace 12 h</span>
+        <span>Inicio</span>
         {trend.points.includes(null) ? <span>— Sin dato</span> : null}
-        <span>Ahora</span>
+        <span>Última</span>
       </div>
     </figure>
   );
