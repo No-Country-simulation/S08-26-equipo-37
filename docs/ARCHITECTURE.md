@@ -59,6 +59,8 @@ Server Components are the default for data access, composition, and non-interact
 
 The current dashboard uses one typed, static maintenance snapshot while backend contracts are still pending. The root route renders two purpose-built presentations from that same data: a server-rendered command center for large plant monitors and a mobile PWA view for alert-focused remote follow-up. CSS selects the presentation by viewport; no user-agent detection or duplicated business rules are needed.
 
+Both presentations link to the statically generated `/machines/[machineId]` detail route. That Server Component validates the route parameter with Zod and derives its signals, alerts, and activity from the same snapshot, so the investigation flow stays consistent without adding a backend contract.
+
 Only the mobile shell is a Client Component because it owns tab, filter, and notification-read state. PWA support currently covers install metadata, local icons, and the simulated notification center. Service workers, push subscriptions, realtime transport, and persistence stay out of scope until their product and backend requirements are validated.
 
 ## Prisma
