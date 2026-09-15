@@ -78,3 +78,97 @@ Evolución Temporal de un Activo:
                                 │                                    │
                     falla_inicio_disparo = 1              falla_estado_causa = "Causa"
                         (261 eventos)                         (1.661 horas acumuladas)
+
+# 🏭 Proyecto de Mantenimiento Predictivo - Área de Data Science
+
+Bienvenido al módulo central de Inteligencia Artificial del proyecto. El objetivo de esta área es transformar la telemetría histórica de la planta en alertas tempranas de fallas para optimizar los tiempos de operación y reducir los costos de parada por averías mecánicas.
+
+---
+
+## 📌 1. Información General y Contexto Operativo
+
+### 🎯 Objetivos del Negocio
+* **Monitoreo en Tiempo Real:** Evaluar hora por hora las lecturas de los sensores para predecir si una máquina entrará en colapso dentro de una ventana crítica de 48 horas.
+* **Optimización de Mantenimiento:** Pasar de un modelo reactivo (reparar cuando ya se rompió) a un modelo predictivo, aprovechando el "Índice de Salud" (0-100) para agendar revisiones técnicas preventivas.
+
+### 🧪 Reglas de Negocio Aplicadas en la Limpieza
+Durante la fase de curación de datos, se establecieron los siguientes criterios industriales para asegurar la fidelidad del dataset:
+* **Valores Faltantes (0% Nulos):** Se eliminó el 2.5% de baches de señal en los sensores mediante técnicas de arrastre cronológico operativo (`ffill` y `bfill`).
+* **Tratamiento del Estado Apagado:** Se removieron 1,530 horas muertas de planta (`estado_operativo == 0`) para evitar que los sensores eléctricos en cero absoluto y el enfriamiento ambiental distorsionen las medias matemáticas del modelo.
+* **Manejo Estratégico de Outliers:** Los picos críticos de vibración y temperatura se conservaron intactos debido a que representan las firmas físicas reales de los colapsos mecánicos de los tornos y compresores.
+
+### 🗺️ El Mapa de Decisiones Analíticas
+Para este dataset se evaluaron 4 horizontes predictivos posibles según la necesidad del negocio:
+1. **`target_falla_48h` (Clasificación Binaria) -> *Camino Seleccionado*:** Responde a la pregunta inmediata: ¿La máquina va a fallar en las próximas 48 horas? (Sí/No). Ideal para encender las alarmas del Dashboard.
+2. `target_tipo_falla` (Clasificación Multiclase): Determina qué componente específico va a fallar (Eléctrico, Rodamiento, Neumático, etc.).
+3. `target_rul_horas` (Regresión Numérica): Estima el número de horas exactas de vida útil restante que le quedan al activo.
+4. `target_estado_salud` (Clasificación Ordinal): Categoriza la severidad del desgaste en niveles (Normal, Bajo Observación, Riesgo Crítico).
+
+---
+
+## 📊 3 Ficha Técnica del Modelo Activo
+* **Algoritmo Seleccionado:** `LightGBM Classifier` (Gradient Boosting optimizado).
+* **Target de Predicción:** `target_falla_48h` (Clasificación Binaria: 1 = Falla Inminente, 0 = Operación Normal).
+* **Estrategia de Desbalance:** Robustecimiento nativo mediante el parámetro `is_unbalance=True` para manejar la baja frecuencia de fallas reales en el histórico.
+
+---
+
+## 📁 3. Organización Interna del Módulo (`ml/`)
+* `/datos`: Datasets históricos curados y limpios.
+* `/notebooks/01_generacion`: Script de origen del dataset sintético inicial.
+* `/notebooks/02_eda_limpieza`: Análisis Exploratorio de Datos y curación de sensores.
+* `/notebooks/03_modelado`: Cuadernos de entrenamiento y ajuste del LightGBM.
+* `/api`: Servidor predictivo en FastAPI encargado de exponer los endpoints de producción.
+
+---
+
+## 🛰️ 4. Contrato de API para el Backend (Actualizado v2.0)
+
+* **Endpoint de Salud (`GET /health`):** Retorna `{"status": "healthy"}` si el modelo está cargado correctamente.
+* **Endpoint de Inferencia (`POST /api/v1/predict/falla`):** El backend ya **NO** necesita calcular promedios ni desviaciones estándar móviles. Solo debe enviar una lista estructurada con las lecturas básicas de las últimas 12 horas y la API de Inteligencia Artificial resolverá las variables avanzadas en microsegundos.
+
+### 📋 Ejemplo de Payload de Entrada Simplificado (JSON esperado):
+```json
+{
+  "id_maquina": "M-01",
+  "tipo_equipo": "Torno CNC",
+  "modelo": "CNC-Principal",
+  "linea_produccion": "Mecanizado_Pesado",
+  "antiguedad_anos": 5,
+  "criticidad": "Alta",
+  "costo_parada_hora_usd": 1500,
+  "potencia_nominal_kw": 45.0,
+  "marca": "BrandX",
+  "horas_operacion_totales": 12450,
+  "ciclos_acumulados": 8500,
+  "horas_desde_ultimo_mantenimiento": 120,
+  "conteo_fallas_previas": 2,
+  "historial_sensores_12h": [
+    {
+      "carga_pct": 82.5,
+      "voltaje_v": 400.0,
+      "corriente_a": 65.2,
+      "potencia_consumida_kw": 38.4,
+      "temperatura_c": 86.5,
+      "vibracion_mms": 14.2,
+      "presion_bar": 4.2,
+      "vibracion_critica": 0,
+      "temperatura_critica": 1,
+      "mes": 4,
+      "dia_semana": "Monday"
+    }
+  ]
+}
+```
+
+### 📊 Ejemplo de Respuesta Enviada al Dashboard (Output JSON):
+```json
+{
+  "id_maquina": "M-01",
+  "falla_predicha_48h": 1,
+  "probabilidad_falla": 0.9234,
+  "score_dashboard": 92,
+  "alerta_estado": "Riesgo crítico",
+  "color_hex": "#e74c3c"
+}
+```
