@@ -32,6 +32,7 @@ The predictive promise is not defined yet: it must be justified by the real data
 - Node.js from `.nvmrc`
 - npm compatible with `package-lock.json`
 - Docker with Compose v2 for the bundled local PostgreSQL service
+- Git LFS (`git-lfs`) for the dataset stored under `datos/`
 
 ## Setup
 
@@ -40,7 +41,11 @@ git clone https://github.com/No-Country-simulation/S08-26-equipo-37.git
 cd S08-26-equipo-37
 nvm use
 npm ci
+git lfs install
+git lfs pull
 ```
+
+The dataset under `datos/` is stored with **Git LFS**. Without `git-lfs`, the CSV appears as a three-line pointer instead of the file (see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md#dataset-git-lfs)).
 
 Create the ignored local environment file:
 
@@ -114,12 +119,17 @@ Deployment target: `https://predictive-maintenance.smacaya.tech`.
 
 ## Documentation
 
+**Entry point: [`docs/README.md`](docs/README.md)** — index of the whole project documentation.
+
+- [`docs/BACKLOG.md`](docs/BACKLOG.md): what every task means and how it is considered done
+- [`docs/SPEC-MVP-PARAMETERS.md`](docs/SPEC-MVP-PARAMETERS.md): MVP parameters to be agreed (target, features, metrics, threshold)
+- [`docs/MINUTES.md`](docs/MINUTES.md): compiled meeting minutes (newest first)
 - [`docs/PRODUCT.md`](docs/PRODUCT.md): facts, hypotheses, scope, and product decisions
 - [`docs/DATA-STRATEGY.md`](docs/DATA-STRATEGY.md): dataset requirements and predictive options
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): server-first modular monolith
 - [`docs/OPEN-QUESTIONS.md`](docs/OPEN-QUESTIONS.md): prioritized unresolved decisions
 - [`docs/ROADMAP.md`](docs/ROADMAP.md): incremental phases without invented dates
-- [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md): local workflow and commands
+- [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md): local workflow, commands and Git LFS
 - [`docs/SECURITY.md`](docs/SECURITY.md): current security boundaries
 - [`docs/adr/`](docs/adr/): accepted architectural decisions
 - [`AGENTS.md`](AGENTS.md): operating rules for developers and coding agents

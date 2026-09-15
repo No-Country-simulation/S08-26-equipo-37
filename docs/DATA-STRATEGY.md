@@ -25,6 +25,7 @@ No se diseñará el modelo de dominio final ni se elegirá una salida predictiva
 - Separar datos de entrenamiento, validación y prueba respetando tiempo y equipos para evitar fuga de información.
 - Empezar con el baseline más simple que responda la pregunta elegida y compararlo contra una referencia operativa.
 - No crear tablas de negocio a partir de nombres de columnas hipotéticos.
+- El dataset vive en **Git LFS** (`datos/`) y su integridad se verifica con `npm run data:validate`: el chequeo falla si el archivo es un puntero LFS y valida columnas, filas, máquinas, positivos y duplicados. En CI lo ejecuta el workflow **Dataset**, que hace checkout con `lfs: true` y solo se dispara cuando cambian el dataset o el propio validador. Al cambiar la versión del dataset hay que actualizar las constantes del validador (y registrarlo acá).
 
 ## Inventario mínimo antes de modelar
 
@@ -43,6 +44,20 @@ La exploración debe responder y dejar documentado:
 - horizonte de anticipación que permitiría actuar.
 
 El primer entregable de datos será un diccionario y un perfil de calidad. Recién entonces se propondrán el contrato de ingestión y el esquema persistente mínimo.
+
+## Datasets de control disponibles
+
+No hay datos reales de la empresa: el MVP se desarrolla sobre el **dataset sintético del equipo** ([`datos/README.md`](../datos/README.md)) y se compara contra datasets públicos.
+
+| Fuente | Qué aporta | Uso previsto |
+| --- | --- | --- |
+| [AI4I 2020 — Predictive Maintenance Dataset](https://www.kaggle.com/datasets/stephanmatzka/predictive-maintenance-dataset-ai4i-2020) | Telemetría tabular con modos de falla etiquetados | Control de cordura del baseline 48 h |
+| [Machine Failure Predictions](https://www.kaggle.com/datasets/shashanknecrothapa/machine-failure-predictions) | Lecturas de sensores con fallas | Feature engineering y clasificación |
+| [Equipment Failure Prediction Dataset](https://www.kaggle.com/datasets/geetanjalisikarwar/equipment-failure-prediction-dataset) | Fallas de equipos con contexto operativo | Comparación de enfoques |
+| [NASA C-MAPSS](https://www.kaggle.com/datasets/behrad3d/nasa-cmaps) | Trayectorias de degradación con RUL | Referencia de RUL (fase 2) |
+| [Google Dataset Search](https://datasetsearch.research.google.com/) | Búsqueda: rodamientos / motores eléctricos con vibración y diagnóstico de fallas | Exploración de fuentes adicionales |
+
+**Regla:** los datasets públicos son **control**, no fuente de verdad. El dataset del proyecto define qué promesa predictiva puede hacer el MVP.
 
 ## Problemas predictivos diferentes
 
