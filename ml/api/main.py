@@ -9,7 +9,7 @@ app = FastAPI(title="Servidor de Inferencia Automático - Mantenimiento Predicti
 
 # Carga segura del modelo .pkl
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "models", "modelo_predictivo_lightgbm.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "models", "modelo_predictivo_lightgbm.joblib")
 model = joblib.load(MODEL_PATH)
 
 # 1. ESQUEMA SIMPLIFICADO: Lo que el backend SÍ conoce (Una sola lectura por hora)
