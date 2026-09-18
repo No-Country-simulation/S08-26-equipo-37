@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Review dependency changes
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
 
   validate:
     runs-on: ubuntu-latest
