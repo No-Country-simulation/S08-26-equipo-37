@@ -4,11 +4,30 @@
 >
 > **Regla de uso:** ninguna métrica de este documento debe presentarse sin la limitación que la acompaña. Si una diapositiva dice PR-AUC 0,842, esta tabla es la que dice qué significa ese número y qué no.
 
+> ## 🚨 Antes de mostrar cualquier métrica: la etiqueta está codificada en las features
+>
+> Medido sobre el dataset canónico, **una cuenta aritmética con tres de las features que el modelo usa recupera el target con precisión y recall de 1,000**:
+>
+> ```python
+> ratio = potencia_consumida_kw / (potencia_nominal_kw * (0.12 + 0.88 * carga_pct / 100))
+> falla_inminente = ratio > 1.07      # TP=5.919 · FP=0 · FN=0 · TN=61.036
+> ```
+>
+> La causa está en el generador, que aplica un sobreconsumo determinista del 15 % exactamente a las filas positivas:
+>
+> ```python
+> sobreconsumo = np.where(df["falla_proximas_48h"] == 1, 1.15, 1.0)
+> df["potencia_consumida_kw"] = np.where(df["estado_operativo"] == 1, potencia_base * sobreconsumo, 0.0)
+> ```
+>
+> `potencia_consumida_kw`, `potencia_nominal_kw` y `carga_pct` están en la lista blanca de [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) §4 y las tres entran al modelo, junto con `corriente_a`, que se deriva de la potencia y arrastra el mismo 15 %. **Mientras sigan ahí, ninguna métrica del baseline mide capacidad predictiva.** Detalle en §4.1 bis.
+
 ## 1. Qué puede afirmarse hoy y qué no
 
 | Afirmación | Estado | Por qué |
 | --- | --- | --- |
-| Un modelo de clasificación de falla a 48 h es viable sobre este dataset | **Sí** | PR-AUC 0,842 con partición temporal sobre abril |
+| Un modelo de clasificación de falla a 48 h **mide capacidad predictiva** sobre este dataset | **No** | La etiqueta se recupera de las features con una regla determinista (§4.1 bis): las métricas están infladas |
+| Un modelo de clasificación de falla a 48 h es viable sobre este dataset | **Pendiente** | Lo será cuando se reentrene sin las columnas que filtran, y ahí se sabrá el número real |
 | El modelo predice fallas en una planta real | **No** | El dataset es sintético: el modelo aprendió la física de un simulador |
 | Existe una probabilidad calibrada de falla | **No** | El umbral y la calibración no están definidos en el producto |
 | Podemos estimar RUL continuo | **No** | El `target_rul_horas` está censurado (ver §3.3) |
@@ -83,11 +102,42 @@ El mecanismo de `estado_operativo` está medido y no es obvio: la máquina deten
 
 **Riesgo residual:** que se hayan encontrado dos columnas con fuga no prueba que no queden otras. La auditoría fue dirigida, no exhaustiva, y el dataset sintético es justamente el tipo de origen donde estas correlaciones se cuelan. También se descartó `velocidad_rpm` por redundante, con el mismo criterio: la selección de features se hizo a mano, caso por caso.
 
+### 4.1 bis La tercera fuga está dentro de las features, y es determinista
+
+Quitar `codigo_alarma_plc` y `estado_operativo` bajó el modelo de 1,00 a métricas plausibles, y por eso se dio la fuga por resuelta. **No lo estaba.** El generador aplica un sobreconsumo del 15 % exactamente a las filas con falla inminente:
+
+```python
+sobreconsumo = np.where(df["falla_proximas_48h"] == 1, 1.15, 1.0)
+df["potencia_consumida_kw"] = np.where(df["estado_operativo"] == 1, potencia_base * sobreconsumo, 0.0)
+df["corriente_a"] = np.where(df["estado_operativo"] == 1,
+                             (df["potencia_consumida_kw"] * 1000.0) / (np.sqrt(3) * df["voltaje_v"] * cos_phi), 0.0)
+```
+
+Como `potencia_base = potencia_nominal_kw * (0.12 + 0.88 * carga_pct / 100)`, el cociente entre lo consumido y lo esperado **vale 1,15 en las positivas y 1,00 en las negativas**. Medido sobre el dataset canónico:
+
+| Grupo | n | ratio mínimo | mediana | máximo |
+| --- | --- | --- | --- | --- |
+| Positivas (`target_falla_48h = 1`) | 5.919 | 1,1477 | **1,1500** | 1,1522 |
+| Negativas | 61.036 | 0,9966 | **1,0000** | 1,0036 |
+
+**Precisión 1,000 y recall 1,000** con un solo umbral en 1,07 (TP 5.919 · FP 0 · FN 0 · TN 61.036). No es una correlación alta: es la etiqueta, escrita en la feature.
+
+Por qué importa tanto:
+
+- **Las métricas del baseline no miden capacidad predictiva.** PR-AUC 0,842, recall 0,88 y precision 0,69 salen de un modelo que tiene acceso a una señal que revela el target. Que no llegue a 1,00 se explica porque un árbol aproxima mal un cociente, no porque no tenga el dato.
+- **La prueba de permutación no podía detectarlo.** Romper la temperatura no bajaba el score porque el modelo no dependía de la física: tenía el cociente.
+- **Ninguna de las auditorías hechas hasta ahora lo habría encontrado.** No es una columna con AUC alto —`corriente_a` mide 0,451 y `carga_pct` 0,421— ni un valor con tasa de positivos anómala. La fuga vive en una **relación** entre columnas, y eso lo único que lo detecta es intentar **reconstruir el target desde el conjunto de features**.
+- **Sobrevive a la limpieza actual**: el filtro quitó las filas de máquina apagada y la imputación tocó los nulos, pero las dos columnas que arrastran el 15 % siguen en la matriz de 42 features.
+
+**Qué hacer, en orden:** (1) excluir `potencia_consumida_kw` y `corriente_a` —o regenerar el dataset sin el `sobreconsumo`—, (2) reentrenar y reportar el número nuevo, (3) agregar al control de fugas una prueba de reconstrucción del target, y (4) recién entonces decidir si la métrica alcanza para el MVP. Hasta el paso (2), cualquier cifra del baseline debe presentarse como **no validada**.
+
+
+
 ### 4.2 Las métricas son por fila, no por evento
 
 Con 7.623 filas positivas repartidas en 261 eventos, **cada falla aporta unas 29 filas positivas** en promedio. Un recall de 0,88 medido por fila **no significa** que se detecten el 88 % de las fallas: significa que se acierta el 88 % de las *horas* etiquetadas. Un operario experimenta eventos, no horas.
 
-Es la limitación más importante de cara al negocio y la más fácil de malinterpretar en una presentación.
+Es la limitación **más fácil de malinterpretar en una presentación**: el número suena a "detecta el 88 % de las fallas" y no significa eso.
 
 ### 4.3 Partición sin agrupar por máquina
 
@@ -142,8 +192,10 @@ Es una ceguera operativa, no un detalle de implementación: en planta, buena par
 
 | Limitación | Qué haría falta | Dónde |
 | --- | --- | --- |
+| **§4.1 bis etiqueta dentro de las features** | **Excluir `potencia_consumida_kw` y `corriente_a` (o regenerar el dataset sin el `sobreconsumo`) y reentrenar. Es la prioridad: sin esto, ninguna métrica vale.** | [#13](../../issues/13), [#10](../../issues/10) |
 | §3.1 definición operativa de falla | Ratificar el §3 de `SPEC-MVP-PARAMETERS.md` y cerrar la P0 n.º 2 | `OPEN-QUESTIONS.md`, [#12](../../issues/12) |
 | §3.2 limpieza sin puntuar | Re-correr el generador y comparar contra el CSV | [#10](../../issues/10) |
+| §3.6 fallas en ráfagas | Decidir si las métricas se reportan por episodio y no por evento | [#13](../../issues/13) |
 | §4.2 métricas por evento | Agregar métricas a nivel de evento, no de fila | [#13](../../issues/13) |
 | §4.3 split por máquina | Validación agrupada por equipo | [#13](../../issues/13) |
 | §4.4 valor de negocio | Matriz de confusión + referencia de calendario | [#13](../../issues/13), [#24](../../issues/24) |
@@ -154,8 +206,8 @@ Es una ceguera operativa, no un detalle de implementación: en planta, buena par
 
 ## 7. Cómo citar este trabajo
 
-Al presentar el MVP, la forma honesta de describirlo es:
+**Mientras §4.1 bis siga abierto, no hay métrica del baseline que se pueda citar como capacidad predictiva.** La forma honesta de describir el estado es:
 
-> Sobre un dataset **sintético** de 25 máquinas y 4 meses, un modelo de clasificación a 48 h alcanza **PR-AUC 0,842** con partición temporal (recall 0,88 y precision 0,69 por hora etiquetada). La validación en planta, la calibración del umbral y la comparación contra el mantenimiento por calendario quedan pendientes, y son las condiciones para hablar de ahorro.
+> Tenemos un pipeline completo —dataset, limpieza, features, modelo y API— y un control de calidad que encontró que **la etiqueta del simulador está codificada en dos de las features**: una regla aritmética sobre `potencia_consumida_kw`, `potencia_nominal_kw` y `carga_pct` reproduce el target con precisión y recall de 1,000. Las métricas publicadas (PR-AUC 0,842) están infladas por eso y **no deben presentarse como desempeño** hasta reentrenar sin esas columnas. Los límites del dataset y del modelo están documentados en este archivo.
 
-Cualquier versión más fuerte de esa frase —"predice fallas con 93 % de exactitud"— omite que la exactitud se mide por hora en un simulador.
+Si en algún momento se reentrena sin las columnas que filtran, la frase vuelve a admitir métricas, con estas salvedades: el dataset es **sintético** (25 máquinas, 4 meses), las fallas vienen en ráfagas (mediana de 16 h entre disparos, así que los "261 eventos" no son independientes), el recall se mide **por hora y no por falla**, y siguen pendientes la calibración del umbral y la comparación contra el mantenimiento por calendario.

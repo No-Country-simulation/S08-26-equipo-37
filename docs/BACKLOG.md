@@ -173,6 +173,10 @@ AUC de **una sola columna** prediciendo `target_falla_48h`:
 > Medido ahora con el mismo método de esta tabla, su AUC es **0,409** (invertido, como `presion_bar`). O sea que **la regla de "AUC > 0,95" tampoco lo habría cazado**, porque el AUC no ve un indicador raro pero muy preciso: `estado_operativo = 0` son solo 1.530 filas de 72.000, pero **el 91,5 % de ellas son positivas, contra el 8,8 % de las filas con la máquina encendida**. Una palanca de diez veces que un AUC de 0,409 esconde.
 >
 > **Regla que falta agregar**: además del AUC, comparar la **tasa de positivos condicionada a cada valor** de la columna. Cualquier valor que multiplique por 5 la tasa base (10,6 %) merece auditoría, aunque su AUC sea bajo. Y si el pipeline vuelve a necesitar `estado_operativo`, primero hay que pasar esa prueba y documentarla acá.
+>
+> 🚨 **Y ni el AUC ni la tasa de positivos alcanzan, porque hay una fuga que vive en una relación entre columnas.** El generador aplica un sobreconsumo determinista del 15 % a las filas con falla inminente, así que `potencia_consumida_kw / (potencia_nominal_kw × (0,12 + 0,88 × carga_pct / 100))` da 1,15 en las positivas y 1,00 en las negativas. Con esa cuenta sola, el target se recupera con **precisión y recall de 1,000** (TP 5.919 · FP 0 · FN 0 · TN 61.036). `corriente_a` arrastra el mismo factor porque se deriva de la potencia. Y las columnas por separado parecen inocentes: `corriente_a` mide AUC 0,451 y `carga_pct` 0,421.
+>
+> **La prueba que sí lo detecta** es intentar **reconstruir el target desde el conjunto de features**: buscar relaciones aritméticas entre columnas permitidas, o entrenar un modelo simple sobre cada par y mirar si alguno predice sospechosamente bien. Falta agregarla al repo. Detalle en [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) §4.1 bis.
 
 ---
 

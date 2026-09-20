@@ -48,13 +48,19 @@
 
 | Grupo | Contenido | Decisión |
 | --- | --- | --- |
-| ✅ **Permitidas** — sensores | `temperatura_c`, `vibracion_mms`, `corriente_a`, `presion_bar`, `carga_pct`, `velocidad_rpm`, `voltaje_v`, `potencia_consumida_kw` | |
-| ✅ **Permitidas** — odómetros/contexto | `horas_operacion_totales`, `ciclos_acumulados`, `horas_desde_ultimo_mantenimiento`, `conteo_fallas_previas`, `estado_operativo` | |
+| ✅ **Permitidas** — sensores | `temperatura_c`, `vibracion_mms`, `corriente_a` 🚨, `presion_bar`, `carga_pct`, `velocidad_rpm`, `voltaje_v`, `potencia_consumida_kw` 🚨 | |
+| ✅ **Permitidas** — odómetros/contexto | `horas_operacion_totales`, `ciclos_acumulados`, `horas_desde_ultimo_mantenimiento`, `conteo_fallas_previas`, `estado_operativo` ⚠️ | |
 | ✅ **Permitidas** — activo | `tipo_equipo`, `modelo`, `linea_produccion`, `criticidad`, `potencia_nominal_kw`, `antiguedad_anos`, `costo_parada_hora_usd` | |
 | 🚫 **Prohibidas (leakage)** | `target_falla_48h`, `target_tipo_falla`, `target_rul_horas`, `target_estado_salud`, `codigo_alarma_plc`, `falla_inicio_disparo`, `falla_estado_causa` | |
 | Regla de construcción | El set se arma con **lista blanca explícita**, nunca "todas las columnas menos el target" | |
 
 > Dato para la reunión: `codigo_alarma_plc` y `target_estado_salud` predicen solos con **AUC 0,998**. Si entran como features, el modelo "da perfecto" y no sirve. Ver [`BACKLOG.md`](./BACKLOG.md#el-test-anti-leakage-con-números-reales-del-dataset).
+
+> 🚨 **`corriente_a` y `potencia_consumida_kw` no son utilizables tal como están.** El generador les aplica un sobreconsumo determinista del **15 %** a las filas con falla inminente, así que el cociente `potencia_consumida_kw / (potencia_nominal_kw × (0,12 + 0,88 × carga_pct / 100))` vale **1,15 en las positivas y 1,00 en las negativas**. Medido sobre el CSV canónico, una sola regla con eso recupera el target con **precisión 1,000 y recall 1,000** (TP 5.919 · FP 0 · FN 0 · TN 61.036). Mientras estas dos columnas estén en la matriz, ninguna métrica del baseline mide capacidad predictiva. Ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) §4.1 bis.
+>
+> ⚠️ **`estado_operativo`**: también filtra el futuro —el 91,5 % de las filas con la máquina detenida son positivas, porque las fallas vienen en ráfagas—. Sirve como contexto de producto, no como feature de modelo.
+>
+> Ninguna de estas dos la habría detectado una auditoría de una sola columna: la fuga de la potencia vive en una **relación entre columnas**. Falta en el repo la prueba que sí las detecta: **intentar reconstruir el target desde el conjunto de features**.
 
 > **Nota de divergencia (2026-09-20).** El baseline del PR #44 **no sigue esta propuesta**, y la regla de "lista blanca explícita" quedó incumplida:
 >
