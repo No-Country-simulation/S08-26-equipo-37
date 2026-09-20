@@ -25,11 +25,13 @@
 
 ## 3. Limitaciones del dataset
 
-### 3.1 La definición de "falla" sigue sin confirmar
+### 3.1 La semántica de "falla" está resuelta; falta ratificar la definición operativa
 
-`falla_inicio_disparo` marca **261 filas** y `falla_estado_causa` tiene valor en **1.661 filas**. Las dos columnas no describen lo mismo: el generador documenta la primera como "pulsos de rotura" y la segunda como el estado que permanece activo durante la ventana de reparación.
+La distinción entre las dos columnas **está resuelta y documentada**: `falla_inicio_disparo` marca el **disparo** (261 pulsos, la hora del colapso) mientras `falla_estado_causa` registra la **convalecencia** (1.661 horas en taller, MTTR ≈ 6,4 h por falla). Las columnas se renombraron en el dataset v2 justamente para expresar esa diferencia (ver [`SCOPE.md`](./SCOPE.md) §5.3).
 
-**Por qué importa:** el target que entrena el modelo se deriva de esa definición. Si "falla" es la parada real, las 1.661 filas son convalecencia; si es el evento con causa diagnosticada, el conteo cambia. Es la pregunta **P0 n.º 2** de [`OPEN-QUESTIONS.md`](./OPEN-QUESTIONS.md) y sigue abierta.
+Lo que falta no es la semántica, sino su **ratificación operativa**. [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) §3 propone las reglas concretas —evento = `falla_inicio_disparo = 1`, ventana = las 48 h previas a un disparo— con la columna "Decisión" vacía, y la pregunta **P0 n.º 2** de [`OPEN-QUESTIONS.md`](./OPEN-QUESTIONS.md) la sigue listando como abierta. Hoy el repositorio afirma las dos cosas a la vez.
+
+**Por qué importa aunque el target ya esté construido:** el conteo de 7.623 filas positivas depende de que la ventana sean "las 48 h *previas* al disparo" y no, por ejemplo, "las 48 h alrededor del evento". Y la distinción disparo/convalecencia es la que decide qué ve un operario: una alerta sobre un disparo inminente no es lo mismo que una alerta sobre una máquina que ya está en taller.
 
 ### 3.2 No hay verificación de la limpieza contra lo inyectado
 
@@ -122,7 +124,7 @@ Es una ceguera operativa, no un detalle de implementación: en planta, buena par
 
 | Limitación | Qué haría falta | Dónde |
 | --- | --- | --- |
-| §3.1 definición de falla | Decisión del equipo y del validador industrial | P0 n.º 2 de `OPEN-QUESTIONS.md` |
+| §3.1 definición operativa de falla | Ratificar el §3 de `SPEC-MVP-PARAMETERS.md` y cerrar la P0 n.º 2 | `OPEN-QUESTIONS.md`, [#12](../../issues/12) |
 | §3.2 limpieza sin puntuar | Re-correr el generador y comparar contra el CSV | [#10](../../issues/10) |
 | §4.2 métricas por evento | Agregar métricas a nivel de evento, no de fila | [#13](../../issues/13) |
 | §4.3 split por máquina | Validación agrupada por equipo | [#13](../../issues/13) |

@@ -168,6 +168,10 @@ AUC de **una sola columna** prediciendo `target_falla_48h`:
 
 **Regla práctica**: cualquier columna con AUC > 0,95 debe auditarse antes de entrar como feature, y un modelo final con AUC ≈ 0,99 significa que está usando una salida.
 
+> ⚠️ **Esta tabla se quedó corta, y eso costó caro.** No incluye `estado_operativo`, que resultó ser la **tercera** columna con fuga: el modelo del PR #44 daba 1,00 perfecto y una prueba de permutación mostró que se apoyaba en ella como atajo, no en la física. Se detectó **después** de entrenar, no acá.
+>
+> El motivo de que se escapara es que no se parece a una salida: es una señal operativa de planta (`1` en marcha, `0` detenida) que nadie sospecharía, y **su AUC nunca se midió**. La regla de arriba era correcta; la tabla estaba incompleta. Si el pipeline vuelve a necesitar esa columna, primero hay que medirla y documentarla acá.
+
 ---
 
 ## 6. Ruta crítica del Sprint 1
