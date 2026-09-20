@@ -129,7 +129,14 @@ Por qué importa tanto:
 - **Ninguna de las auditorías hechas hasta ahora lo habría encontrado.** No es una columna con AUC alto —`corriente_a` mide 0,451 y `carga_pct` 0,421— ni un valor con tasa de positivos anómala. La fuga vive en una **relación** entre columnas, y eso lo único que lo detecta es intentar **reconstruir el target desde el conjunto de features**.
 - **Sobrevive a la limpieza actual**: el filtro quitó las filas de máquina apagada y la imputación tocó los nulos, pero las dos columnas que arrastran el 15 % siguen en la matriz de 42 features.
 
-**Qué hacer, en orden:** (1) excluir `potencia_consumida_kw` y `corriente_a` —o regenerar el dataset sin el `sobreconsumo`—, (2) reentrenar y reportar el número nuevo, (3) agregar al control de fugas una prueba de reconstrucción del target, y (4) recién entonces decidir si la métrica alcanza para el MVP. Hasta el paso (2), cualquier cifra del baseline debe presentarse como **no validada**.
+**Qué hacer, en orden:**
+
+1. **Sacar `potencia_consumida_kw` y `corriente_a` de la matriz de features.** Son las dos únicas features derivadas del target: verificado sobre el generador, donde una sola línea (`sobreconsumo`) las afecta, y las demás referencias al flag de falla construyen el propio target o el RUL censurado.
+2. **Reentrenar y reportar el número nuevo.** Sin esas columnas el techo lo marcan las señales físicas: `temperatura_c` mide AUC 0,702 y `vibracion_mms` 0,668 por sí solas, así que una caída grande respecto de 0,842 es esperable y **es la señal de que la corrección funcionó**.
+3. **Auditar el generador antes que los datos.** La tabla de [`BACKLOG.md`](./BACKLOG.md) muestra que ninguna barrida estadística caza esta fuga: el AUC de una columna no la ve (0,451), el cociente entre dos columnas tampoco (0,577), y solo la forma afín exacta da 1,000. Como el dataset lo genera código nuestro que vive en el repo, la auditoría confiable es leer ese código y buscar cada derivación de una feature a partir del target.
+4. **Alternativa más limpia si el dataset se regenera:** quitar el `sobreconsumo` del generador. Ahí la fuga desaparece de raíz y las dos columnas vuelven a ser utilizables.
+
+Hasta el paso 2, cualquier cifra del baseline debe presentarse como **no validada**.
 
 
 
