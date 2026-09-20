@@ -57,6 +57,20 @@ Es decir: el RUL solo tiene valor **poco antes** del fallo (≤48 h) y es nulo e
 
 La telemetría es horaria y las anomalías inyectadas duran 1 hora. El dataset no permite analizar fallas que se resuelven en minutos, que es la escala donde suele jugarse la detección temprana real.
 
+### 3.6 El proceso de fallas simulado es en ráfagas
+
+Medido sobre el dataset canónico, los 261 disparos **no son eventos independientes repartidos en cuatro meses**: entre disparos consecutivos de la misma máquina hay una mediana de **16 horas** (mínimo 5, máximo 1.130), y **el 59 % de los intervalos es de 48 horas o menos**.
+
+La consecuencia directa: **el 62,4 % de las filas positivas cae dentro de las 48 h de más de una falla**. La etiqueta es correcta —cada fila positiva tiene efectivamente una falla dentro de las 48 h siguientes, verificado fila por fila—, pero las ventanas se solapan tanto que:
+
+- los "261 eventos" no son 261 casos independientes, así que las métricas por evento tampoco se salvan de la correlación;
+- una franja de degradación genera varios disparos, y el modelo puede aprender el episodio, no cada falla;
+- y explica por qué `estado_operativo` fue un atajo tan potente: si la máquina está detenida (en taller), la ráfaga suele seguir, así que **el 91,5 % de las filas con la máquina apagada son positivas, contra el 8,8 % de las encendidas** (§4.1).
+
+Para un modo de falla como "rodamiento picado" o "motor térmico", fallar cada 16 horas no es física de planta: es una propiedad del simulador. Cualquier métrica del baseline hereda esa facilidad.
+
+
+
 ## 4. Limitaciones del modelo
 
 Modelo actual: **LightGBM Classifier** sobre una matriz de **42 features** (telemetría más ventanas móviles de 3, 6 y 12 h de temperatura, vibración y presión). Partición **temporal**: abril como mes de test (17.386 filas, 2.412 positivas) y los tres meses previos como entrenamiento (53.084 filas).
@@ -64,6 +78,8 @@ Modelo actual: **LightGBM Classifier** sobre una matriz de **42 features** (tele
 ### 4.1 Hubo fuga de datos, y se corrigió
 
 El primer entrenamiento daba métricas perfectas (**1,00**). La prueba de permutación lo delató: al desordenar la variable líder, el modelo seguía acertando todo. La causa era que `codigo_alarma_plc` y `estado_operativo` **contenían la respuesta del futuro** en el simulador, y el modelo las usaba como atajo en lugar de la física. Se eliminaron y el modelo pasó a métricas realistas.
+
+El mecanismo de `estado_operativo` está medido y no es obvio: la máquina detenida marca el taller, y como las fallas vienen en ráfagas (§3.6), estar detenida anticipa otro disparo casi con certeza — **el 91,5 % de las filas con `estado_operativo = 0` son positivas, contra el 8,8 % de las filas con la máquina encendida**. Es una palanca de diez veces que ningún AUC muestra (el suyo es 0,409), y por eso pasó la auditoría previa. Ver el aviso en [`BACKLOG.md`](./BACKLOG.md).
 
 **Riesgo residual:** que se hayan encontrado dos columnas con fuga no prueba que no queden otras. La auditoría fue dirigida, no exhaustiva, y el dataset sintético es justamente el tipo de origen donde estas correlaciones se cuelan. También se descartó `velocidad_rpm` por redundante, con el mismo criterio: la selección de features se hizo a mano, caso por caso.
 
@@ -105,6 +121,8 @@ El modelo entrega `predict_proba` y lo que está medido es **discriminación** (
 ### 4.8 El modelo solo vio horas de máquina encendida
 
 El pipeline de limpieza filtró la base para conservar únicamente `estado_operativo == 1`, y con eso quitó las **1.530 horas de máquina apagada** (72.000 → 70.470 filas). El notebook lo documenta como "Depuración de Horas Muertas".
+
+Verificado sobre el dataset canónico: esas 1.530 filas son **exactamente** las que tienen `target_estado_salud = "Parada_Mantenimiento"` (los dos conjuntos coinciden fila por fila). O sea que el filtro **eliminó una clase completa de la etiqueta de estado**, no solo horas vacías. Cualquier trabajo futuro sobre estados de salud —la entidad `historial_estados_activo` de [`DATA-MODEL.md`](./DATA-MODEL.md)— se queda sin ese estado en los datos limpios.
 
 El efecto no es cosmético: **el modelo nunca vio una máquina detenida**, así que nada lo habilita a distinguir "detenida porque es domingo" de "detenida porque se rompió". Y el contrato de la API tampoco manda `estado_operativo` (se quitó por fuga de datos), de modo que **una lectura de una máquina apagada se puntúa igual que una en marcha**: los sensores en cero entran al modelo como una observación más y devuelven una probabilidad con apariencia válida.
 

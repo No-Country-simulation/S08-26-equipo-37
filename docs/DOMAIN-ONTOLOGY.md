@@ -21,9 +21,11 @@
 >
 > Estos desajustes **no son errores de este documento**: son la razón por la que [`DATA-MODEL.md`](./DATA-MODEL.md) propone enums que el dataset no puede poblar (ver el material de decisión del schema en la reunión). Decidir si esta taxonomía es *la planta que tenemos* o *el marco al que aspiramos* es una decisión pendiente del equipo, y de ella depende qué enums se implementan.
 
-> **Los dos ejes de estado son la clave del §Categoría 5.** La taxonomía separa correctamente **estados operativos** (Operación Normal · Standby/Pausa · En Mantenimiento · Fuera de Servicio) de **nivel de salud** (Normal · Bajo Observación · Riesgo Elevado · Crítico/Falla Inminente). El dataset del MVP **mezcla los dos** en una sola columna, `target_estado_salud` (Normal · Bajo observación · Riesgo crítico · **Parada** · **FALLA**), y por eso ningún enum de salud de 4 valores puede guardarlo.
+> **Los dos ejes de estado son la clave del §Categoría 5.** La taxonomía separa correctamente **estados operativos** (Operación Normal · Standby/Pausa · En Mantenimiento · Fuera de Servicio) de **nivel de salud** (Normal · Bajo Observación · Riesgo Elevado · Crítico/Falla Inminente). El dataset del MVP **mezcla los dos** en una sola columna, `target_estado_salud`, que tiene **cuatro valores** (verificados sobre el CSV canónico): `Normal` (63,2 %) · `Bajo_Observacion` (26,0 %) · `Riesgo_Critico` (8,6 %) · **`Parada_Mantenimiento`** (2,1 %). Por eso ningún enum de salud de 4 valores puede guardarlo: el cuarto valor es un **estado operativo**, no de salud. No existe ningún valor `FALLA` en esa columna — los 261 disparos se marcan en `falla_inicio_disparo`, que es otra columna.
 >
-> ⚠️ **Trampa de nombres:** el `Riesgo crítico` del dataset **no** equivale al `Crítico / Falla Inminente` de esta taxonomía. Por nivel de degradación corresponde a **Riesgo Elevado**. Mapear por parecido de palabras pondría el estado en el nivel equivocado.
+> ⚠️ **Trampa de nombres:** el `Riesgo_Critico` del dataset **no** equivale al `Crítico / Falla Inminente` de esta taxonomía. Por nivel de degradación corresponde a **Riesgo Elevado**. Mapear por parecido de palabras pondría el estado en el nivel equivocado.
+>
+> 📌 Dato útil para el mapeo: `Parada_Mantenimiento` coincide **exactamente** con las 1.530 filas de `estado_operativo = 0`, y el pipeline de limpieza las eliminó (ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) §4.8).
 
 Modelo Ontológico y Taxonomía de Mantenimiento Predictivo (PdM)
 Documento de Alineación Técnica y Funcional

@@ -168,9 +168,11 @@ AUC de **una sola columna** prediciendo `target_falla_48h`:
 
 **Regla práctica**: cualquier columna con AUC > 0,95 debe auditarse antes de entrar como feature, y un modelo final con AUC ≈ 0,99 significa que está usando una salida.
 
-> ⚠️ **Esta tabla se quedó corta, y eso costó caro.** No incluye `estado_operativo`, que resultó ser la **tercera** columna con fuga: el modelo del PR #44 daba 1,00 perfecto y una prueba de permutación mostró que se apoyaba en ella como atajo, no en la física. Se detectó **después** de entrenar, no acá.
+> ⚠️ **Esta tabla se quedó corta, y la regla del 0,95 no lo habría evitado.** No incluye `estado_operativo`, que resultó ser la **tercera** columna con fuga: el modelo del PR #44 daba 1,00 perfecto y una prueba de permutación mostró que se apoyaba en ella como atajo, no en la física. Se detectó **después** de entrenar, no acá.
 >
-> El motivo de que se escapara es que no se parece a una salida: es una señal operativa de planta (`1` en marcha, `0` detenida) que nadie sospecharía, y **su AUC nunca se midió**. La regla de arriba era correcta; la tabla estaba incompleta. Si el pipeline vuelve a necesitar esa columna, primero hay que medirla y documentarla acá.
+> Medido ahora con el mismo método de esta tabla, su AUC es **0,409** (invertido, como `presion_bar`). O sea que **la regla de "AUC > 0,95" tampoco lo habría cazado**, porque el AUC no ve un indicador raro pero muy preciso: `estado_operativo = 0` son solo 1.530 filas de 72.000, pero **el 91,5 % de ellas son positivas, contra el 8,8 % de las filas con la máquina encendida**. Una palanca de diez veces que un AUC de 0,409 esconde.
+>
+> **Regla que falta agregar**: además del AUC, comparar la **tasa de positivos condicionada a cada valor** de la columna. Cualquier valor que multiplique por 5 la tasa base (10,6 %) merece auditoría, aunque su AUC sea bajo. Y si el pipeline vuelve a necesitar `estado_operativo`, primero hay que pasar esa prueba y documentarla acá.
 
 ---
 
