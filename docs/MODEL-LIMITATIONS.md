@@ -131,6 +131,38 @@ Y la limpieza **cambia el conjunto de columnas**: quita `estado_operativo`, `fal
 
 El conteo de picos **sube** en lugar de bajar, y esa es la señal de alarma: cuando la hora siguiente a un pico inyectado quedó nula, el forward-fill copió el valor del pico (32–48 mm/s donde la mediana de la máquina es ~3) y creó un **pico falso de una hora**.
 
+#### Y lo más grave: el filtro de "horas muertas" borró la mitad de las fallas
+
+El notebook describe esa operación como *"Depuración de Horas Muertas (-1.530 filas)"*, que suena a quitar tiempo inactivo. Medido sobre los datos, eso es lo que borró:
+
+| | Crudo | Limpio | Diferencia |
+| --- | --- | --- | --- |
+| Disparos (`falla_inicio_disparo = 1`) | 261 | **131** | **−130 (el 50 %)** |
+| Filas positivas | 7.623 | 6.223 | −1.400 |
+| Eventos de falla en el set de entrenamiento (enero–marzo) | 158 | **79** | −79 |
+| Eventos de falla en el set de test (abril) | 103 | **52** | −51 |
+
+La coincidencia es exacta: los 130 disparos que desaparecen son **los 130 que ocurren con `estado_operativo = 0`**. Y no es un defecto del dataset: la hora del colapso es, por definición, una hora en la que la máquina suele estar detenida. El filtro que quiso sacar horas inactivas sacó, junto con ellas, **el registro de la mitad de las fallas**.
+
+Consecuencias:
+
+- El modelo **entrena con la mitad de los eventos** y se evalúa con la otra mitad, y la mitad descartada no es aleatoria: son las fallas cuyo registro coincide con la parada.
+- El dataset limpio **ya no contiene el evento** de esas fallas, así que una evaluación por evento —la que recomienda [#13](../../issues/13) para salir del problema de las métricas por fila— solo puede cubrir 131 de 261.
+- La descripción del cambio ("horas muertas") no representa su efecto real, y por eso pasó desapercibido hasta ahora.
+
+#### Además: enero no tiene ninguna falla, y el test tiene el doble de tasa base
+
+Distribución medida en el dataset limpio:
+
+| Mes | Filas | Positivas | Tasa | Disparos |
+| --- | --- | --- | --- | --- |
+| Enero | 18.600 | 0 | **0,0 %** | **0** |
+| Febrero | 16.060 | 2.977 | 18,5 % | 62 |
+| Marzo | 18.424 | 834 | 4,5 % | 17 |
+| Abril (test) | 17.386 | 2.412 | 13,9 % | 52 |
+
+Dos cosas que esto implica y que nadie había anotado: **el primer mes del entrenamiento no aporta un solo ejemplo positivo**, y la partición temporal no es solo temporal — **el test tiene casi el doble de tasa base que el entrenamiento** (13,9 % contra 7,2 %). Eso mueve precision y recall respecto de lo que se vería en un mes promedio, y explica parte de la diferencia entre las métricas del notebook y las de cualquier reentrenamiento.
+
 **Tres divergencias con la regla que el equipo aprobó** en [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) §6:
 
 1. *"Sensor nulo: Guardar NULL; si se imputa, en columna aparte con flag"* → se imputó **en la misma columna y sin flag**. Hoy no hay forma de saber qué celdas son imputadas mirando el dataset limpio: hubo que compararlo contra el crudo para descubrirlo.
@@ -181,7 +213,7 @@ Por qué importa tanto:
 **Qué hacer, en orden:**
 
 1. **Sacar `potencia_consumida_kw` y `corriente_a` de la matriz de features.** Son las dos únicas features derivadas del target: verificado sobre el generador, donde una sola línea (`sobreconsumo`) las afecta, y las demás referencias al flag de falla construyen el propio target o el RUL censurado.
-2. **Reentrenar y reportar el número nuevo.** Sin esas columnas el techo lo marcan las señales físicas: `temperatura_c` mide AUC 0,702 y `vibracion_mms` 0,668 por sí solas, así que una caída grande respecto de 0,842 es esperable y **es la señal de que la corrección funcionó**.
+2. **Reentrenar y reportar el número nuevo.** Sin esas columnas el techo lo marcan las señales físicas, no el oráculo. Una versión anterior de este documento anticipaba "una caída grande"; **medido, no es tan grande**: una regresión logística sobre 33 features sin las columnas que filtran —misma partición temporal, enero–marzo contra abril— alcanza **AUC 0,938** en abril, con recall 0,78 a precision 0,57 (y 0,87 a precision 0,50). Con las columnas que filtran sube a 0,949, y agregando el cociente explícito da **0,993**: ese último número es el control que valida el experimento, porque reproduce el oráculo. LightGBM con features no lineales debería superar a la regresión logística, así que **0,938 es un piso, no un techo**, y el criterio de éxito del MVP (recall ≥ 70–80 %) parece alcanzable. **Caveat importante:** con ventanas solapadas y fallas en ráfaga (§3.6), esa AUC mide detección de *episodio*, no anticipación de 48 h; para eso hace falta una métrica por evento.
 3. **Auditar el generador antes que los datos.** La tabla de [`BACKLOG.md`](./BACKLOG.md) muestra que ninguna barrida estadística caza esta fuga: el AUC de una columna no la ve (0,451), el cociente entre dos columnas tampoco (0,577), y solo la forma afín exacta da 1,000. Como el dataset lo genera código nuestro que vive en el repo, la auditoría confiable es leer ese código y buscar cada derivación de una feature a partir del target.
 4. **Alternativa más limpia si el dataset se regenera:** quitar el `sobreconsumo` del generador. Ahí la fuga desaparece de raíz y las dos columnas vuelven a ser utilizables.
 
@@ -248,7 +280,10 @@ Es una ceguera operativa, no un detalle de implementación: en planta, buena par
 
 | Limitación | Qué haría falta | Dónde |
 | --- | --- | --- |
-| **§4.1 bis etiqueta dentro de las features** | **Excluir `potencia_consumida_kw` y `corriente_a` (o regenerar el dataset sin el `sobreconsumo`) y reentrenar. Es la prioridad: sin esto, ninguna métrica vale.** | [#13](../../issues/13), [#10](../../issues/10) |
+| §4.1 bis etiqueta dentro de las features | **Excluir `potencia_consumida_kw` y `corriente_a` (o regenerar el dataset sin el `sobreconsumo`) y reentrenar. Es la prioridad: sin esto, ninguna métrica vale.** Estimación medida sin esas columnas: AUC ≈ 0,94 (§4.1 bis) | [#13](../../issues/13), [#10](../../issues/10) |
+| §3.7 la mitad de las fallas borradas | Corregir el filtro: no descartar las filas de parada que *son* el evento de falla, o al menos conservar el disparo | [#10](../../issues/10), [#13](../../issues/13) |
+| §3.7 imputación sin trazabilidad | Imputar con flag o dejar el NULL, como pide `SPEC-MVP-PARAMETERS.md` §6 | [#10](../../issues/10) |
+| §3.7 enero sin fallas y tasa base del test | Reportar métricas por mes y no solo en abril, o excluir enero del entrenamiento | [#13](../../issues/13) |
 | §3.1 definición operativa de falla | Ratificar el §3 de `SPEC-MVP-PARAMETERS.md` y cerrar la P0 n.º 2 | `OPEN-QUESTIONS.md`, [#12](../../issues/12) |
 | §3.2 limpieza sin puntuar | Construir la tabla de comparación con las reglas de extracción de §3.2: **ya es posible**, no depende de nadie | [#10](../../issues/10) |
 | §3.6 fallas en ráfagas | Decidir si las métricas se reportan por episodio y no por evento | [#13](../../issues/13) |
