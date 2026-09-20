@@ -56,7 +56,22 @@ Lo que falta no es la semántica, sino su **ratificación operativa**. [`SPEC-MV
 
 Las anomalías se inyectaron para poder **puntuar la limpieza**, pero no existe en el repositorio el listado celda por celda (qué fila, qué columna, qué valor) que permita medir recall y precisión de detección. Sin eso, la limpieza se validó con inspección visual, no con métricas.
 
-**Nota para [#10](../../issues/10):** como el generador es reproducible con SEED 42, ese listado es *derivable* volviendo a correr el notebook de generación y comparando contra el CSV canónico. Cerrar #10 es trabajo pendiente, no una dependencia externa — siempre que el script del repositorio sea el que produjo el CSV v2.
+**Corrección (2026-09-20):** una versión anterior de este documento decía que el listado era derivable re-corriendo el generador. **No lo es**: el notebook de generación lee su insumo de una ruta absoluta de Windows (`C:\Users\PC\Desktop\dataset_mantenimiento_predictivo.csv`) y **ese archivo base no está versionado en el repositorio**, así que el generador no se puede re-ejecutar desde el repo.
+
+**Pero el listado sí es extraíble del CSV**, porque cada inyección tiene una firma medible. Verificado contra el dataset canónico:
+
+| Inyección | Regla de detección | Nominal | Esperado tras los nulos | Detectado |
+| --- | --- | --- | --- | --- |
+| Picos de vibración | `vibracion_mms ≥ 25` | 280 | 273,0 | **274** |
+| Transitorios de voltaje | `voltaje_v` en [340, 390] o [120, 150] | 220 | 214,5 | **215** |
+| Picos de temperatura | `temperatura_c ≥ 130` | 150 | 146,2 | **145** |
+| Nulos MCAR (7 sensores) | celda vacía | 1.800 por sensor | — | **1.841–1.842** |
+| Flatlines | valor constante en ventana | 19 h y 17 h | — | 21 y 32 filas |
+| Deriva de calibración | tendencia por máquina | M-05 y M-14 | — | presente |
+
+La columna "esperado" no es una excusa: el generador inyecta los nulos **después** de los picos, con una tasa del 2,5 %, así que se espera perder ~2,5 % de cada pico. Los tres conteos coinciden con esa predicción dentro de ±1,5, que es la mejor señal de que la regla de extracción es la correcta. Los nulos dan 1.841–1.842 en vez de 1.800 porque los *blackouts* posteriores apagan bloques de telemetría y suman ~42.
+
+**Consecuencia para [#10](../../issues/10):** la comparación contra lo inyectado **se puede construir ya**, con estas reglas, sin esperar a nadie. Dos advertencias para hacerlo bien: el voltaje exige usar los rangos exactos (una regla laxa como `≤150` barre las filas de máquina apagada, que tienen 0 V y son el 1 % del dataset), y las flatlines exigen detectar **varianza cero en una ventana**, no un valor exacto —`62,45` también aparece por casualidad en la variación normal de M-11.
 
 ### 3.3 El RUL está censurado por construcción
 
@@ -201,7 +216,7 @@ Es una ceguera operativa, no un detalle de implementación: en planta, buena par
 | --- | --- | --- |
 | **§4.1 bis etiqueta dentro de las features** | **Excluir `potencia_consumida_kw` y `corriente_a` (o regenerar el dataset sin el `sobreconsumo`) y reentrenar. Es la prioridad: sin esto, ninguna métrica vale.** | [#13](../../issues/13), [#10](../../issues/10) |
 | §3.1 definición operativa de falla | Ratificar el §3 de `SPEC-MVP-PARAMETERS.md` y cerrar la P0 n.º 2 | `OPEN-QUESTIONS.md`, [#12](../../issues/12) |
-| §3.2 limpieza sin puntuar | Re-correr el generador y comparar contra el CSV | [#10](../../issues/10) |
+| §3.2 limpieza sin puntuar | Construir la tabla de comparación con las reglas de extracción de §3.2: **ya es posible**, no depende de nadie | [#10](../../issues/10) |
 | §3.6 fallas en ráfagas | Decidir si las métricas se reportan por episodio y no por evento | [#13](../../issues/13) |
 | §4.2 métricas por evento | Agregar métricas a nivel de evento, no de fila | [#13](../../issues/13) |
 | §4.3 split por máquina | Validación agrupada por equipo | [#13](../../issues/13) |
