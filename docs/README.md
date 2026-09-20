@@ -29,7 +29,7 @@
 
 | Documento | Qué contiene | Estado |
 | --- | --- | --- |
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Monolito modular server-first, flujos de request, límites | Existe |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Monolito modular server-first, flujos de request, workspace de ML (Python) y límites | Existe |
 | [`adr/`](./adr/) | Decisiones de arquitectura: 0001 monolito modular · 0002 Prisma/PostgreSQL · 0003 server-first · 0004 sin tiempo real prematuro · **0005 convención de documentación** | Existe |
 | [`DATA-MODEL.md`](./DATA-MODEL.md) | Esquema conceptual E-R, mapeo del dataset a entidades y flujo de trazabilidad | **Nuevo** |
 | [`SECURITY.md`](./SECURITY.md) | Fronteras de confianza, secretos, base de datos | Existe |
