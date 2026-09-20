@@ -59,4 +59,15 @@ $RECYCLE.BIN/
 /temp/
 *.tmp
 *.temp
+
+# Python (the ML workspace under ml/)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+/.pytest_cache/
+/.mypy_cache/
+/.ruff_cache/
 ml/env_ml
+ml/.venv/
+ml/venv/
