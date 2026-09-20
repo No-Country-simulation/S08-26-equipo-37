@@ -92,6 +92,14 @@ Con precision 0,69 y recall 0,88, **aproximadamente una de cada tres alertas ser
 
 La prueba de permutación mostró que romper la temperatura apenas mueve el score (caída de 0,0084) porque las ventanas de 6 y 12 h absorben la señal. Es **robustez física por redundancia**, pero también significa que el modelo no depende de una señal dominante identificable: explicar "el motivo" de una alerta, que el dashboard pide, no sale de la importancia de features.
 
+### 4.7 La probabilidad no está calibrada
+
+[`DATA-STRATEGY.md`](./DATA-STRATEGY.md) fija que una salida de probabilidad se valida con **discriminación *y* calibración**, y aclara que *"un score de ranking no es una probabilidad; el valor debe conservar significado probabilístico fuera del entrenamiento"*.
+
+El modelo entrega `predict_proba` y lo que está medido es **discriminación** (PR-AUC). En el notebook **no hay curva de confiabilidad ni Brier score**: nadie verificó que un 0,80 signifique 80 % de las veces.
+
+**Consecuencia práctica:** mientras no se mida, la salida debe presentarse como **score de riesgo**, no como probabilidad. Es exactamente la distinción que `DATA-STRATEGY.md` pide no mezclar, y afecta tanto a la interfaz (que hoy declara que su índice no es una probabilidad) como a la fórmula de prioridad de `SPEC-MVP-PARAMETERS.md` §8, que multiplica por `P(48h)`.
+
 ## 5. Limitaciones de integración y operación
 
 - **Nada consume el modelo.** El dashboard renderiza un snapshot estático y su índice de condición **no es una probabilidad** (`src/features/maintenance/types.ts`). Ver [`ARCHITECTURE.md`](./ARCHITECTURE.md).
@@ -110,6 +118,7 @@ La prueba de permutación mostró que romper la temperatura apenas mueve el scor
 | §4.3 split por máquina | Validación agrupada por equipo | [#13](../../issues/13) |
 | §4.4 valor de negocio | Matriz de confusión + referencia de calendario | [#13](../../issues/13), [#24](../../issues/24) |
 | §4.5 umbral | Definir costos de falso positivo y falso negativo | P1 de `OPEN-QUESTIONS.md` |
+| §4.7 calibración | Curva de confiabilidad y Brier score sobre el mes de test | [#13](../../issues/13) |
 | §5 integración | Seed desde el CSV v2 y servicio de predicciones | [#16](../../issues/16), [#19](../../issues/19) |
 
 ## 7. Cómo citar este trabajo
