@@ -21,6 +21,8 @@
 > ```
 >
 > `potencia_consumida_kw`, `potencia_nominal_kw` y `carga_pct` están en la lista blanca de [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) §4 y las tres entran al modelo, junto con `corriente_a`, que se deriva de la potencia y arrastra el mismo 15 %. **Mientras sigan ahí, ninguna métrica del baseline mide capacidad predictiva.** Detalle en §4.1 bis.
+>
+> Todo esto es verificable en un comando: `python3 analisis/verify-dataset-claims.py` (ver [`../analisis/README.md`](../analisis/README.md)).
 
 ## 1. Qué puede afirmarse hoy y qué no
 
@@ -255,6 +257,8 @@ Cifras = **porcentaje de los 52 eventos de abril detectados** (al menos una aler
 3. **El criterio aprobado de "recall ≥ 70–80 %" no es alcanzable de forma significativa a nivel de evento.** Se llega al 69 % recién con ~40 alertas por máquina al mes, y en ese punto el azar ya detecta el 93 %: el detector no aporta nada. En un presupuesto realista (2–4 alertas por máquina al mes) el modelo detecta **19–33 % de los eventos**.
 
 **Consecuencia:** la métrica de éxito hay que redefinirla como *"porcentaje de eventos detectados con al menos N horas de anticipación, con un presupuesto de A alertas por máquina al mes, contra el piso del azar"*. Y el piso del azar debería ser obligatorio en toda evaluación de este proyecto: sin él, cualquier número de recall se lee como logro cuando puede ser densidad.
+
+**Reproducible:** `python3 analisis/evaluate-baseline-honestly.py` recalcula esta tabla y la del §4.1 bis.
 
 **Salvedades de esta medición:** el modelo es una regresión logística, o sea un piso (LightGBM puede rendir mejor al mismo presupuesto); solo son evaluables **52 de los 103 eventos** de abril, porque la limpieza borró la otra mitad (§3.7); y las ventanas previas quedan más delgadas que 48 h reales por esas mismas filas eliminadas.
 
