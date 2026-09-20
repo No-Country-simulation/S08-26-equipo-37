@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "datos/**"
+      - "ml/**"
+      - ".gitattributes"
       - "scripts/validate-dataset.mjs"
       - "package.json"
       - ".github/workflows/dataset.yml"
@@ -12,6 +14,8 @@ on:
       - main
     paths:
       - "datos/**"
+      - "ml/**"
+      - ".gitattributes"
       - "scripts/validate-dataset.mjs"
   workflow_dispatch:
 
