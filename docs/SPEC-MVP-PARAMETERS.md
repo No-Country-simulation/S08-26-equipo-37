@@ -56,6 +56,17 @@
 
 > Dato para la reunión: `codigo_alarma_plc` y `target_estado_salud` predicen solos con **AUC 0,998**. Si entran como features, el modelo "da perfecto" y no sirve. Ver [`BACKLOG.md`](./BACKLOG.md#el-test-anti-leakage-con-números-reales-del-dataset).
 
+> **Nota de divergencia (2026-09-20).** El baseline del PR #44 **no sigue esta propuesta**, y la regla de "lista blanca explícita" quedó incumplida:
+>
+> | Punto | Este documento propone | El modelo implementado usa |
+> | --- | --- | --- |
+> | Features de activo | 7 columnas (tipo, modelo, línea, criticidad, potencia, antigüedad, costo) | Las 7 **más `id_maquina` y `marca`**, que no están en la lista blanca |
+> | `velocidad_rpm` | Permitida | **Excluida** por redundante |
+> | `estado_operativo` | Permitida como contexto operativo | **Excluida** por fuga de datos: era una de las dos columnas que filtraban el futuro |
+> | Features derivadas | El §5 las define | Aparecieron 4 que no están en ninguna lista: `vibracion_critica` (>15 mm/s), `temperatura_critica` (>75 °C), `mes`, `dia_semana` |
+>
+> El uso de `id_maquina` como feature es el punto más delicado: combinado con la partición temporal (que no agrupa por equipo), habilita al modelo a memorizar comportamiento por máquina. Consecuencias y el resto de los límites en [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md).
+
 ## 5. Ventanas y variables derivadas
 
 | Parámetro | Recomendación por defecto | Decisión | Impacto si cambia |
@@ -64,6 +75,8 @@
 | Dirección de la ventana | Solo **pasado** (`shift`, sin ventanas centradas) | | Ventana centrada = leakage |
 | Deltas | Cambio vs. 6 h y 24 h antes | | Captura tendencia |
 | Agregados por activo | Media histórica de la máquina | | Contextualiza el valor actual |
+
+> **Nota de divergencia (2026-09-20).** La implementación usa ventanas de **3, 6 y 12 h con media y desvío solamente** (18 features derivadas), **sin** las ventanas de 24 y 48 h, sin máximo, **sin deltas** y **sin agregados por activo** que propone esta tabla. La dirección es la correcta —solo pasado, sin ventanas centradas—, que era la parte crítica para no filtrar el futuro.
 
 ## 6. Nulos, outliers y calidad
 
@@ -75,6 +88,8 @@
 | Picos inyectados | Flag + exclusión de agregados o winsorizado; **nunca** borrar la fila | |
 | Picos de degradación real | Se conservan como señal (no winsorizar) | |
 | Duplicados | Constraint único `(id_maquina, fecha_hora)`; verificado: 0 | |
+
+> **Nota de divergencia (2026-09-20).** Sobre la primera fila: la implementación **filtró** `estado_operativo == 1` y quitó esas **1.530 filas** (72.000 → 70.470), documentándolo como "Depuración de Horas Muertas". Es lo contrario de lo que dice esta tabla. La consecuencia es que el modelo nunca vio una máquina detenida y el contrato de inferencia no manda `estado_operativo`, así que una lectura de máquina apagada se puntúa como si estuviera en marcha (ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) §4.8).
 
 ## 7. Partición de datos y validación
 

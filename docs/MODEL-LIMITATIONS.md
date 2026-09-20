@@ -100,6 +100,16 @@ El modelo entrega `predict_proba` y lo que está medido es **discriminación** (
 
 **Consecuencia práctica:** mientras no se mida, la salida debe presentarse como **score de riesgo**, no como probabilidad. Es exactamente la distinción que `DATA-STRATEGY.md` pide no mezclar, y afecta tanto a la interfaz (que hoy declara que su índice no es una probabilidad) como a la fórmula de prioridad de `SPEC-MVP-PARAMETERS.md` §8, que multiplica por `P(48h)`.
 
+### 4.8 El modelo solo vio horas de máquina encendida
+
+El pipeline de limpieza filtró la base para conservar únicamente `estado_operativo == 1`, y con eso quitó las **1.530 horas de máquina apagada** (72.000 → 70.470 filas). El notebook lo documenta como "Depuración de Horas Muertas".
+
+El efecto no es cosmético: **el modelo nunca vio una máquina detenida**, así que nada lo habilita a distinguir "detenida porque es domingo" de "detenida porque se rompió". Y el contrato de la API tampoco manda `estado_operativo` (se quitó por fuga de datos), de modo que **una lectura de una máquina apagada se puntúa igual que una en marcha**: los sensores en cero entran al modelo como una observación más y devuelven una probabilidad con apariencia válida.
+
+Es una ceguera operativa, no un detalle de implementación: en planta, buena parte del tiempo de una máquina es tiempo detenido.
+
+> **Divergencia con una regla aprobada:** [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) §6 dice, sobre esas mismas 1.530 filas, *"Se conserva: no es error"*. La implementación hizo lo contrario. La reunión tiene que decidir cuál de las dos cosas vale, porque de eso depende cómo se representa la máquina detenida sin filtrar el futuro.
+
 ## 5. Limitaciones de integración y operación
 
 - **Nada consume el modelo.** El dashboard renderiza un snapshot estático y su índice de condición **no es una probabilidad** (`src/features/maintenance/types.ts`). Ver [`ARCHITECTURE.md`](./ARCHITECTURE.md).
@@ -119,6 +129,7 @@ El modelo entrega `predict_proba` y lo que está medido es **discriminación** (
 | §4.4 valor de negocio | Matriz de confusión + referencia de calendario | [#13](../../issues/13), [#24](../../issues/24) |
 | §4.5 umbral | Definir costos de falso positivo y falso negativo | P1 de `OPEN-QUESTIONS.md` |
 | §4.7 calibración | Curva de confiabilidad y Brier score sobre el mes de test | [#13](../../issues/13) |
+| §4.8 máquina detenida | Decidir cómo se representa el tiempo detenido sin filtrar el futuro | [#12](../../issues/12), [#15](../../issues/15) |
 | §5 integración | Seed desde el CSV v2 y servicio de predicciones | [#16](../../issues/16), [#19](../../issues/19) |
 
 ## 7. Cómo citar este trabajo
