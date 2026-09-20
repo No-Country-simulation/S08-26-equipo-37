@@ -266,7 +266,7 @@ RUL fino (regresión/supervivencia), predicción del **tipo** de falla como sali
 7. **Decisión de esquema Prisma** con el mapeo del §7.2 (Fase 2) + seed desde el CSV v2.
 8. **Priorización** (score × criticidad × costo) y **dashboard de riesgo por máquina** (F3/F5).
 9. **Alertas + feedback** (F6/F7) y **validación MVP** (F8).
-10. **Documento de limitaciones**: dataset sintético, censura RUL, leakage (declarado en el repo).
+10. **Documento de limitaciones**: dataset sintético, censura RUL, leakage (declarado en el repo) → [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md).
 
 ---
 
