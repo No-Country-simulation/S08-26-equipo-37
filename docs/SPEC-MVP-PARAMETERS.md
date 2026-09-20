@@ -137,7 +137,7 @@ npm run data:validate     # valida el dataset (falla si es un puntero LFS)
 ```
 
 - Dataset canónico: [`datos/dataset_mantenimiento_predictivo_realista.csv`](../datos/dataset_mantenimiento_predictivo_realista.csv) (Git LFS, commit `c8a224a`)
-- Diccionario oficial: [`datos/README.md`](../datos/README.md) · Generador reproducible: [`datos/script_generacion_de_datos.ipynb`](../datos/script_generacion_de_datos.ipynb) (SEED = 42)
+- Diccionario oficial: [`ml/README.md`](../ml/README.md) · Generador reproducible: [`ml/notebooks/01_generacion/script_generacion_de_datos.ipynb`](../ml/notebooks/01_generacion/script_generacion_de_datos.ipynb) (SEED = 42)
 - Guía del backlog: [`BACKLOG.md`](./BACKLOG.md) · Estrategia de datos: [`DATA-STRATEGY.md`](./DATA-STRATEGY.md)
 - **Propuesta de horizonte extendido**: [`RUL-STRATEGY.md`](./RUL-STRATEGY.md) — probabilidad a 7/30/90 días y RUL en rango; es el insumo para decidir si el MVP incorpora información más allá de las 48 h (ver §11 de ese documento: 3 preguntas y 3 opciones)
 - Issues relacionados: [#10](../../issues/10) · [#11](../../issues/11) · [#13](../../issues/13) · [#14](../../issues/14) · [#15](../../issues/15) · [#25](../../issues/25)

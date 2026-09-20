@@ -292,7 +292,7 @@ RUL fino (regresión/supervivencia), predicción del **tipo** de falla como sali
 | [`DATA-STRATEGY.md`](./DATA-STRATEGY.md) | Regla rectora, inventario mínimo y datasets de control |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`adr/`](./adr/) | Arquitectura vigente y decisiones registradas |
 | [`BACKLOG.md`](./BACKLOG.md) · [`MINUTES.md`](./MINUTES.md) | Qué significa cada tarea · minutas compiladas |
-| [`../datos/README.md`](../datos/README.md) | Diccionario oficial del dataset |
+| [`../ml/README.md`](../ml/README.md) | Diccionario oficial del dataset |
 
 Los materiales originales (documentos de trabajo previos) quedan en el historial de git del repositorio y del espacio compartido del equipo.
 

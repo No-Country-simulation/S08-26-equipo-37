@@ -47,7 +47,7 @@ El primer entregable de datos será un diccionario y un perfil de calidad. Reci�
 
 ## Datasets de control disponibles
 
-No hay datos reales de la empresa: el MVP se desarrolla sobre el **dataset sintético del equipo** ([`datos/README.md`](../datos/README.md)) y se compara contra datasets públicos.
+No hay datos reales de la empresa: el MVP se desarrolla sobre el **dataset sintético del equipo** ([`ml/README.md`](../ml/README.md)) y se compara contra datasets públicos.
 
 | Fuente | Qué aporta | Uso previsto |
 | --- | --- | --- |
