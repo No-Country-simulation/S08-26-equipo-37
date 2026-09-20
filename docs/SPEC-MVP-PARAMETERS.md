@@ -123,6 +123,22 @@
 | Fórmula de prioridad | `P(48h) × peso(criticidad) × costo_parada_normalizado` | | Definir los pesos de criticidad (Alta/Media/Baja) |
 | Factor adicional | Horas desde el último mantenimiento (opcional) | | Favorece equipos postergados |
 
+> **Nota de divergencia y medición (2026-09-20).** La comparación obligatoria no existía; **ahora está medida**, a igual presupuesto de alertas y con un piso de azar. Resultado sobre abril (porcentaje de eventos de falla detectados con al menos una alerta en las 48 h previas):
+>
+> | Alertas en el mes | Modelo | Calendario | Azar |
+> | --- | --- | --- | --- |
+> | 50 (~2 por máquina) | **19,2 %** | 5,8 % | 11,7 % |
+> | 100 (~4 por máquina) | **32,7 %** | 5,8 % | 22,1 % |
+> | 250 (~10 por máquina) | 38,5 % | 5,8 % | **44,9 %** |
+> | 1.000 (~40 por máquina) | 69,2 % | 19,2 % | **92,6 %** |
+>
+> Dos consecuencias para esta tabla:
+>
+> 1. **La métrica principal "recall ≥ 70–80 %" no dice a qué nivel se mide.** Por fila se alcanza 0,87 con el modelo actual; por **evento** —lo que experimenta un operario— el modelo detecta **19–33 %** con un presupuesto realista de 2–4 alertas por máquina al mes. Conviene redefinirla como *"eventos detectados con al menos N horas de anticipación, con un presupuesto de A alertas por máquina al mes"*.
+> 2. **La "métrica secundaria: alertas por semana" deja de ser secundaria**: es la que hace comparables las dos columnas. Y el **piso del azar** debería agregarse como tercera referencia obligatoria, porque con presupuestos altos el azar detecta más eventos que el modelo.
+>
+> Detalle y salvedades en [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) §4.4.
+
 ## 9. Frecuencia y operación
 
 | Parámetro | Recomendación por defecto | Decisión |

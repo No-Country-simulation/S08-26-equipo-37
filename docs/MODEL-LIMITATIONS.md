@@ -225,20 +225,38 @@ Hasta el paso 2, cualquier cifra del baseline debe presentarse como **no validad
 
 Con 7.623 filas positivas repartidas en 261 eventos, **cada falla aporta unas 29 filas positivas** en promedio. Un recall de 0,88 medido por fila **no significa** que se detecten el 88 % de las fallas: significa que se acierta el 88 % de las *horas* etiquetadas. Un operario experimenta eventos, no horas.
 
+La diferencia, **medida**: con el mismo modelo y el mismo mes (abril), el recall por fila a precision 0,50 es **0,87**, y el porcentaje de **eventos** detectados es **19–33 %** según el presupuesto de alertas (§4.4). O sea que el número amable y el número útil se diferencian por un factor de 3.
+
 Es la limitación **más fácil de malinterpretar en una presentación**: el número suena a "detecta el 88 % de las fallas" y no significa eso.
 
 ### 4.3 Partición sin agrupar por máquina
 
 El split es temporal pero **no agrupa por máquina**, y `id_maquina` y `modelo` entran como variables categóricas nativas de LightGBM. Con 25 equipos, el modelo puede memorizar patrones por equipo en lugar de aprender degradación general. Falta la validación agrupada (*leave-machines-out*) para saber cuánto de la performance es generalizable.
 
-### 4.4 Sin matriz de confusión ni comparación contra el calendario
+### 4.4 La comparación contra el calendario, medida (y el piso del azar)
 
-Faltan dos piezas para cuantificar el valor:
+El notebook no trae matriz de confusión ni comparación contra la referencia operativa, y `SPEC-MVP-PARAMETERS.md` §8 marca la segunda como **obligatoria**. Medida sobre abril, **a igual presupuesto de alertas** —que es la única forma honesta de comparar— y con un **piso de azar** para poder interpretar el resultado:
 
-- **Matriz de confusión**: no está en el notebook.
-- **Referencia operativa**: no hay comparación contra el mantenimiento por calendario, que es la práctica que el MVP pretende mejorar.
+| Alertas en el mes | Modelo | Calendario (`horas_desde_ultimo_mantenimiento`) | Azar (media de 20 semillas) |
+| --- | --- | --- | --- |
+| 25 (~1 por máquina) | 9,6 % | 5,8 % | 5,8 % ± 2,7 |
+| 50 (~2 por máquina) | **19,2 %** | 5,8 % | 11,7 % ± 4,5 |
+| 100 (~4 por máquina) | **32,7 %** | 5,8 % | 22,1 % ± 4,1 |
+| 250 (~10 por máquina) | 38,5 % | 5,8 % | **44,9 %** ± 6,1 |
+| 500 (~20 por máquina) | 55,8 % | 7,7 % | **72,2 %** ± 5,7 |
+| 1.000 (~40 por máquina) | 69,2 % | 19,2 % | **92,6 %** ± 4,0 |
 
-Sin esta última, el PR-AUC es un número técnico sin traducción a decisión.
+Cifras = **porcentaje de los 52 eventos de abril detectados** (al menos una alerta en las 48 h previas). Anticipación mediana del modelo: 20–33 h según el presupuesto.
+
+**Tres lecturas, y las tres importan:**
+
+1. **El modelo le gana al calendario por 3 a 5 veces** en todos los presupuestos. La práctica que el MVP quiere mejorar se mejora, y eso es lo que `SPEC-MVP-PARAMETERS.md` §8 pedía demostrar.
+2. **Pero solo le gana al azar con presupuestos bajos.** A partir de ~250 alertas por mes, alarmar al azar detecta más eventos que el modelo. No es un defecto del modelo: es que con las fallas en ráfaga (§3.6) y ventanas de 48 h, una densidad alta de alarmas "pega" en la ventana de casi cualquier evento por casualidad. **Con presupuestos altos, cualquier detector parece bueno.**
+3. **El criterio aprobado de "recall ≥ 70–80 %" no es alcanzable de forma significativa a nivel de evento.** Se llega al 69 % recién con ~40 alertas por máquina al mes, y en ese punto el azar ya detecta el 93 %: el detector no aporta nada. En un presupuesto realista (2–4 alertas por máquina al mes) el modelo detecta **19–33 % de los eventos**.
+
+**Consecuencia:** la métrica de éxito hay que redefinirla como *"porcentaje de eventos detectados con al menos N horas de anticipación, con un presupuesto de A alertas por máquina al mes, contra el piso del azar"*. Y el piso del azar debería ser obligatorio en toda evaluación de este proyecto: sin él, cualquier número de recall se lee como logro cuando puede ser densidad.
+
+**Salvedades de esta medición:** el modelo es una regresión logística, o sea un piso (LightGBM puede rendir mejor al mismo presupuesto); solo son evaluables **52 de los 103 eventos** de abril, porque la limpieza borró la otra mitad (§3.7); y las ventanas previas quedan más delgadas que 48 h reales por esas mismas filas eliminadas.
 
 ### 4.5 El punto de operación no está elegido
 
@@ -301,4 +319,6 @@ Es una ceguera operativa, no un detalle de implementación: en planta, buena par
 
 > Tenemos un pipeline completo —dataset, limpieza, features, modelo y API— y un control de calidad que encontró que **la etiqueta del simulador está codificada en dos de las features**: una regla aritmética sobre `potencia_consumida_kw`, `potencia_nominal_kw` y `carga_pct` reproduce el target con precisión y recall de 1,000. Las métricas publicadas (PR-AUC 0,842) están infladas por eso y **no deben presentarse como desempeño** hasta reentrenar sin esas columnas. Los límites del dataset y del modelo están documentados en este archivo.
 
-Si en algún momento se reentrena sin las columnas que filtran, la frase vuelve a admitir métricas, con estas salvedades: el dataset es **sintético** (25 máquinas, 4 meses), las fallas vienen en ráfagas (mediana de 16 h entre disparos, así que los "261 eventos" no son independientes), el recall se mide **por hora y no por falla**, y siguen pendientes la calibración del umbral y la comparación contra el mantenimiento por calendario.
+Si en algún momento se reentrena sin las columnas que filtran, la frase vuelve a admitir métricas, con estas salvedades: el dataset es **sintético** (25 máquinas, 4 meses), las fallas vienen en ráfagas (mediana de 16 h entre disparos, así que los "261 eventos" no son independientes), **el recall se mide por hora y no por falla** —y la diferencia es de un factor de 3: 0,87 por fila contra 19–33 % de eventos (§4.2 y §4.4)—, el test tiene casi el doble de tasa base que el entrenamiento, y sigue pendiente la calibración del umbral.
+
+**Y una recomendación de método que sale de esta revisión:** toda evaluación de este proyecto debería reportar **el piso del azar al mismo presupuesto de alertas**. Sin él, un recall alto se lee como logro cuando puede ser solo densidad de alarmas sobre fallas agrupadas. Con presupuestos altos el azar detecta más eventos que el modelo (§4.4), y eso no se ve en ninguna métrica por fila.
