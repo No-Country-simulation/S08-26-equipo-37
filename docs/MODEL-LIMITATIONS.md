@@ -105,6 +105,40 @@ Para un modo de falla como "rodamiento picado" o "motor térmico", fallar cada 1
 
 
 
+### 3.7 Qué hace realmente la limpieza (y qué no)
+
+Comparado celda por celda contra el CSV crudo, con la clave `(id_maquina, fecha_hora)`, el dataset limpio (`ml/datos/dataset_limpio.parquet`, 70.470 × 30) resulta de **dos operaciones y nada más**:
+
+| Transformación | Medición |
+| --- | --- |
+| Eliminar las filas de máquina apagada | 72.000 → 70.470 (−1.530, exactamente las de `Parada_Mantenimiento`) |
+| Imputar los nulos | 1.841–1.842 por sensor → **0**, con **forward-fill** (99,8–99,9 % de los valores imputados son idénticos al anterior de la misma máquina) |
+| Tratar outliers | **Ninguno.** En las siete columnas de sensores, **0 celdas cambiaron de valor**: cada celda no nula es idéntica al crudo |
+| Winsorizar o marcar picos | **Ninguno**, ni flag ni recorte |
+
+Y la limpieza **cambia el conjunto de columnas**: quita `estado_operativo`, `falla_estado_causa`, `target_rul_horas` y `target_estado_salud`, y agrega las cuatro derivadas `vibracion_critica`, `temperatura_critica`, `mes` y `dia_semana`. Las flags son correctas: `vibracion_critica` coincide con `vibracion_mms > 15` y `temperatura_critica` con `temperatura_c > 75` en las 70.470 filas.
+
+**Tabla comparada contra lo inyectado** (el criterio de [#10](../../issues/10)):
+
+| Inyección | Nominal | En el crudo | En el limpio | Qué pasó |
+| --- | --- | --- | --- | --- |
+| Picos de vibración | 280 | 274 | **285** | ✋ el forward-fill **propagó 11 picos** a la hora siguiente |
+| Transitorios de voltaje | 220 | 215 | **217** | ✋ ídem, +2 |
+| Picos de temperatura | 150 | 145 | **147** | ✋ ídem, +2 |
+| Nulos MCAR | 1.800/sensor | 1.841 | 0 | ✅ imputados, pero sin trazabilidad |
+| Flatlines | 19 h y 17 h | presentes | presentes | ✋ sin tratar |
+| Deriva de calibración | M-05, M-14 | presente | presente | ✅ se conserva (es señal) |
+
+El conteo de picos **sube** en lugar de bajar, y esa es la señal de alarma: cuando la hora siguiente a un pico inyectado quedó nula, el forward-fill copió el valor del pico (32–48 mm/s donde la mediana de la máquina es ~3) y creó un **pico falso de una hora**.
+
+**Tres divergencias con la regla que el equipo aprobó** en [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) §6:
+
+1. *"Sensor nulo: Guardar NULL; si se imputa, en columna aparte con flag"* → se imputó **en la misma columna y sin flag**. Hoy no hay forma de saber qué celdas son imputadas mirando el dataset limpio: hubo que compararlo contra el crudo para descubrirlo.
+2. *"Picos inyectados: Flag + exclusión de agregados o winsorizado; nunca borrar la fila"* → **no se hizo nada**, y el forward-fill los duplicó.
+3. *"Picos de degradación real: se conservan como señal"* → se cumple, pero por omisión: no hay ninguna lógica que distinga un pico inyectado de uno real.
+
+**Impacto:** el modelo entrena con picos duplicados y con valores imputados indistinguibles de los reales, y la limpieza no se puede auditar desde su propio resultado. No es un error de cálculo: es que la limpieza es **más delgada de lo que su notebook sugiere** —el análisis de outliers que muestra es exploratorio, no aplicado— y el criterio de #10 pide que sea puntuable.
+
 ## 4. Limitaciones del modelo
 
 Modelo actual: **LightGBM Classifier** sobre una matriz de **42 features** (telemetría más ventanas móviles de 3, 6 y 12 h de temperatura, vibración y presión). Partición **temporal**: abril como mes de test (17.386 filas, 2.412 positivas) y los tres meses previos como entrenamiento (53.084 filas).

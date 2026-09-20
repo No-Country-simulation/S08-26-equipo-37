@@ -96,6 +96,11 @@
 | Duplicados | Constraint único `(id_maquina, fecha_hora)`; verificado: 0 | |
 
 > **Nota de divergencia (2026-09-20).** Sobre la primera fila: la implementación **filtró** `estado_operativo == 1` y quitó esas **1.530 filas** (72.000 → 70.470), documentándolo como "Depuración de Horas Muertas". Es lo contrario de lo que dice esta tabla. La consecuencia es que el modelo nunca vio una máquina detenida y el contrato de inferencia no manda `estado_operativo`, así que una lectura de máquina apagada se puntúa como si estuviera en marcha (ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) §4.8).
+>
+> **Y dos divergencias más, medidas celda por celda contra el CSV crudo** (ver §3.7 del mismo documento):
+>
+> - *"Sensor nulo: Guardar NULL; si se imputa, en columna aparte con flag"* → se imputó **en la misma columna y sin flag**, con **forward-fill**. Hoy no se puede saber qué celdas son imputadas mirando el dataset limpio.
+> - *"Picos inyectados: Flag + exclusión de agregados o winsorizado; nunca borrar la fila"* → **no se aplicó ninguna de las tres cosas**. En las siete columnas de sensores **0 celdas cambiaron de valor**: no hubo tratamiento de outliers. Peor: el forward-fill **duplicó** los picos cuyo vecino siguiente quedó nulo (11 picos de vibración pasaron de 274 a 285).
 
 ## 7. Partición de datos y validación
 
