@@ -45,6 +45,10 @@ El MVP aprobado predice **una sola cosa**: ¿esta máquina falla en las próxima
 
 **Cómo lo estimamos sin etiquetas largas.** Construimos una tabla de "de qué etapa a qué etapa" por hora, estimada de las 72.000 filas del dataset:
 
+> **Nota sobre el espacio de estados (2026-09-20).** Estos **cinco** estados no salen de una sola columna: `target_estado_salud` tiene **cuatro** valores —`Normal`, `Bajo_Observacion`, `Riesgo_Critico` y `Parada_Mantenimiento`— y `FALLA` se deriva de `falla_inicio_disparo = 1`. La tabla los combina porque la falla es un evento instantáneo que no vive en la columna de salud, y de ahí que tampoco sea un estado absorbente. Lo aclaramos porque se leyó mal una vez: **no existe ningún valor `FALLA` en `target_estado_salud`**.
+>
+> **Verificación (2026-09-20):** la matriz se reprodujo **exacta** contra el CSV canónico. Los ocho conteos publicados abajo coinciden uno por uno, y también las 261 transiciones que salen de `FALLA`.
+
 | desde \ hacia | Normal | Bajo observación | Riesgo crítico | Parada | **FALLA** |
 | --- | --- | --- | --- | --- | --- |
 | **Normal** | 0,9966 | 0,0034 | 0 | 0 | 0 |
