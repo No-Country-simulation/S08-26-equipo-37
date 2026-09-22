@@ -61,6 +61,12 @@ jobs:
       - name: Run static checks
         run: npm run check
 
+      # Reads blob sizes from the Git index, so it needs no Git LFS download
+      # and no dependencies. Fails when a data or model artifact was committed
+      # without Git LFS.
+      - name: Validate repository artifacts
+        run: npm run artifacts:validate
+
       - name: Build application
         run: npm run build
 

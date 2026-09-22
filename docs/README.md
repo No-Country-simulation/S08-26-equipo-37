@@ -21,16 +21,17 @@
 | Documento | Qué contiene | Estado |
 | --- | --- | --- |
 | [`DATA-STRATEGY.md`](./DATA-STRATEGY.md) | Regla rectora, inventario mínimo, tipos de problema, integridad del dataset | Existe — **actualizar** ([#25](../../issues/25)) |
-| [`../datos/README.md`](../datos/README.md) | Diccionario oficial de las 30 columnas del dataset | Existe (Dutaya) |
-| [`../datos/script_generacion_de_datos.ipynb`](../datos/script_generacion_de_datos.ipynb) | Generador reproducible (SEED = 42) con la ground truth de anomalías | Existe (Dutaya) |
+| [`../ml/README.md`](../ml/README.md) | Diccionario oficial de las 30 columnas del dataset | Existe (Dutaya) |
+| [`../ml/notebooks/01_generacion/script_generacion_de_datos.ipynb`](../ml/notebooks/01_generacion/script_generacion_de_datos.ipynb) | Generador reproducible (SEED = 42) con la ground truth de anomalías | Existe (Dutaya) |
 | [`DOMAIN-ONTOLOGY.md`](./DOMAIN-ONTOLOGY.md) | Taxonomía PdM: activos, variables, canales, modos de falla, estados, criticidad | **Nuevo** |
+| [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) | Limitaciones del dataset y del modelo: qué puede afirmarse y qué no, y cómo citar las métricas | **Nuevo** (issue [#14](../../issues/14)) |
 
 ## Arquitectura y modelo de datos
 
 | Documento | Qué contiene | Estado |
 | --- | --- | --- |
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Monolito modular server-first, flujos de request, límites | Existe |
-| [`adr/`](./adr/) | Decisiones de arquitectura: 0001 monolito modular · 0002 Prisma/PostgreSQL · 0003 server-first · 0004 sin tiempo real prematuro · **0005 convención de documentación** | Existe |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Monolito modular server-first, flujos de request, workspace de ML (Python) y límites | Existe |
+| [`adr/`](./adr/) | Decisiones de arquitectura: 0001 monolito modular · 0002 Prisma/PostgreSQL · 0003 server-first · 0004 sin tiempo real prematuro · **0005 convención de documentación** · **0006 artefactos binarios** | Existe |
 | [`DATA-MODEL.md`](./DATA-MODEL.md) | Esquema conceptual E-R, mapeo del dataset a entidades y flujo de trazabilidad | **Nuevo** |
 | [`SECURITY.md`](./SECURITY.md) | Fronteras de confianza, secretos, base de datos | Existe |
 

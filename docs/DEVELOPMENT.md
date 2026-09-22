@@ -5,7 +5,7 @@
 - Node.js `24.15.0` LTS (see `.nvmrc`)
 - npm `11` or another version compatible with the lockfile
 - Docker with Compose v2 for the bundled local PostgreSQL service
-- Git LFS (`git-lfs`) for the dataset stored under `datos/`
+- Git LFS (`git-lfs`) for the data artifacts stored under `datos/` and `ml/datos/`
 
 ## Local setup
 
@@ -54,6 +54,19 @@ head -1 datos/dataset_mantenimiento_predictivo_realista.csv  # fecha_hora,id_maq
 
 If you only need the file and cannot install LFS, open it in the GitHub web UI and use **Download raw file**: that link serves the real content.
 
+### Every data artifact goes through LFS
+
+`.gitattributes` tracks **all** `*.csv` and `*.parquet` files with Git LFS. The rule is by extension on purpose: an earlier version matched only `datos/`, and a 16 MB duplicate of the dataset was committed under `ml/datos/` as a regular blob (PR #44), where it is copied into every clone from then on.
+
+`npm run artifacts:validate` fails when a tracked data or model artifact exceeds 512 KiB, which means it bypassed LFS. It reads blob sizes from the Git index, so it needs neither `git-lfs` nor a download, and the `CI` workflow runs it on every pull request. Removing a file that already reached the history needs a rewrite of that history, so the check runs before the merge instead.
+
+| Path | Contents | LFS |
+| --- | --- | --- |
+| `datos/dataset_mantenimiento_predictivo_realista.csv` | Canonical dataset (72,000 rows) | Yes — pointer in the index |
+| `ml/datos/dataset_limpio.parquet` | Cleaned dataset produced by the notebooks | Yes — pointer in the index |
+
+Do not keep a second copy of the dataset inside `ml/`: notebooks read the canonical CSV from its published URL or from `datos/`.
+
 ## Commands
 
 | Command | Purpose |
@@ -62,6 +75,7 @@ If you only need the file and cannot install LFS, open it in the GitHub web UI a
 | `npm run dev:full` | Validate setup, start PostgreSQL, and start the development server |
 | `npm run setup:check` | Report missing local database prerequisites |
 | `npm run data:validate` | Validate dataset integrity (fails when the file is a Git LFS pointer) |
+| `npm run artifacts:validate` | Fail when a data or model artifact was committed without Git LFS |
 | `npm run db:up` | Start and wait for the local PostgreSQL service |
 | `npm run db:down` | Stop local Compose services while preserving database data |
 | `npm test` | Run the Node.js test suite |

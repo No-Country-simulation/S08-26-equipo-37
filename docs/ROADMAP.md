@@ -4,8 +4,9 @@
 
 ### Hechos conocidos
 
-- La base técnica se está inicializando y el dataset definitivo aún no fue validado.
-- La promesa predictiva no puede fijarse antes de explorar los datos.
+- La base técnica está construida: la aplicación compila, tiene CI (tests, lint, typecheck, build, integridad del dataset y control de artefactos) y despliegue automático a producción.
+- El dataset definitivo existe, está versionado en Git LFS y se valida automáticamente en CI. Lo que falta no es el dato, sino su **validación industrial**.
+- La promesa predictiva no puede fijarse antes de explorar los datos. La exploración ya se hizo y sus límites están documentados en [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md).
 
 ### Hipótesis
 
@@ -14,6 +15,22 @@ La secuencia siguiente es una ruta incremental para validar valor con el menor a
 ### Decisión
 
 Cada fase debe producir un resultado verificable y cerrar solo cuando cumple su criterio de salida. No se avanza para compensar una pregunta P0 que afecte directamente a la fase siguiente.
+
+## Estado a 2026-09-20
+
+Esta tabla registra **evidencia**, no cierres: el cierre de cada fase lo confirma el equipo en reunión. Existe para que el roadmap no se lea entero en futuro cuando parte ya está hecha.
+
+| Fase | Evidencia disponible | Cierre |
+| --- | --- | --- |
+| **F0** Bootstrap técnico | La app instala, compila y pasa sus comprobaciones; CI verde; health check independiente de la base; deploy automático | Criterio cumplido |
+| **F1** Exploración del dataset | Diccionario en [`../ml/README.md`](../ml/README.md), generador reproducible (SEED 42), dataset v2 validado en CI, problema elegido (falla binaria a 48 h). Falta el perfil contra la ground truth ([#10](../../issues/10)) | Criterio casi cumplido |
+| **F2** Inventario de máquinas | Catálogo de las 25 máquinas en la interfaz, sobre datos simulados. El seed sobre base real no existe ([#16](../../issues/16)) | Pendiente |
+| **F3** Visualización de sensores | Vista temporal con unidades y manejo de nulos, con datos simulados ([#17](../../issues/17)) | Parcial |
+| **F4** Baseline de condición | LightGBM con PR-AUC 0,842 y partición temporal; limitaciones documentadas. Faltan matriz de confusión, split por máquina y comparación contra el calendario ([#13](../../issues/13)) | Parcial |
+| **F5** Priorización de riesgo | Lista priorizada en la interfaz, con un índice que **no** es una probabilidad ([#18](../../issues/18)) | Parcial |
+| **F6** Alertas | No iniciada. El centro de notificaciones de la PWA es simulado ([#20](../../issues/20)) | Pendiente |
+| **F7** Feedback de mantenimiento | No iniciada ([#21](../../issues/21)) | Pendiente |
+| **F8** Validación del MVP | No iniciada. El validador industrial sigue sin asignar ([#24](../../issues/24)) | Pendiente |
 
 ## Fase 0 — Bootstrap técnico
 

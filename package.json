@@ -20,6 +20,7 @@
     "db:validate": "prisma validate",
     "setup:check": "node scripts/check-local-setup.mjs",
     "data:validate": "node scripts/validate-dataset.mjs",
+    "artifacts:validate": "node scripts/validate-artifacts.mjs",
     "db:up": "npm run setup:check && docker compose up -d --wait --wait-timeout 60 postgres",
     "db:down": "docker compose down",
     "db:migrate": "prisma migrate dev",

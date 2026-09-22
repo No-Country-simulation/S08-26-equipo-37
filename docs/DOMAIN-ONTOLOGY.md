@@ -10,6 +10,23 @@
 
 > **Qué define:** el vocabulario común del proyecto — qué es un activo, una variable de condición, un canal de captura, un modo de falla, un estado de salud y cómo se prioriza una intervención. Es la referencia para DS (features), Backend (tablas) y Frontend (filtros del tablero).
 
+> **Alcance (2026-09-20).** Esta taxonomía es una **referencia general de PdM**, y describe una planta más amplia que la del dataset del MVP. Conviene tenerlo presente antes de derivar enums o tablas de acá:
+>
+> | Pieza | La taxonomía describe | El dataset del MVP tiene |
+> | --- | --- | --- |
+> | Activos | Motores eléctricos de 4–5 HP y 100–300 HP, transmisiones, tableros de fuerza, bancos de condensadores | Máquinas de mecanizado: torno CNC, centro de mecanizado 5 ejes, fresadora, rectificadora, taladro, corte láser, corte plasma, sierra cinta, compresor de tornillo, sistema hidráulico |
+> | Potencia | Caballos de fuerza (HP) | `potencia_nominal_kw` (4,0 a 75,0 kW); el dataset no tiene HP |
+> | Modos de falla | Aislamiento de bobinado, picadura de pista, desalineación de poleas, pérdida de capacidad de condensador | Tres causas registradas: rodamiento, motor térmico y presión de bomba |
+> | Instrumental | Megóhmetro, cámara térmica, pinza amperimétrica | Ocho columnas numéricas por lectura, sin metadata de instrumento |
+>
+> Estos desajustes **no son errores de este documento**: son la razón por la que [`DATA-MODEL.md`](./DATA-MODEL.md) propone enums que el dataset no puede poblar (ver el material de decisión del schema en la reunión). Decidir si esta taxonomía es *la planta que tenemos* o *el marco al que aspiramos* es una decisión pendiente del equipo, y de ella depende qué enums se implementan.
+
+> **Los dos ejes de estado son la clave del §Categoría 5.** La taxonomía separa correctamente **estados operativos** (Operación Normal · Standby/Pausa · En Mantenimiento · Fuera de Servicio) de **nivel de salud** (Normal · Bajo Observación · Riesgo Elevado · Crítico/Falla Inminente). El dataset del MVP **mezcla los dos** en una sola columna, `target_estado_salud`, que tiene **cuatro valores** (verificados sobre el CSV canónico): `Normal` (63,2 %) · `Bajo_Observacion` (26,0 %) · `Riesgo_Critico` (8,6 %) · **`Parada_Mantenimiento`** (2,1 %). Por eso ningún enum de salud de 4 valores puede guardarlo: el cuarto valor es un **estado operativo**, no de salud. No existe ningún valor `FALLA` en esa columna — los 261 disparos se marcan en `falla_inicio_disparo`, que es otra columna.
+>
+> ⚠️ **Trampa de nombres:** el `Riesgo_Critico` del dataset **no** equivale al `Crítico / Falla Inminente` de esta taxonomía. Por nivel de degradación corresponde a **Riesgo Elevado**. Mapear por parecido de palabras pondría el estado en el nivel equivocado.
+>
+> 📌 Dato útil para el mapeo: `Parada_Mantenimiento` coincide **exactamente** con las 1.530 filas de `estado_operativo = 0`, y el pipeline de limpieza las eliminó (ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) §4.8).
+
 Modelo Ontológico y Taxonomía de Mantenimiento Predictivo (PdM)
 Documento de Alineación Técnica y Funcional
 

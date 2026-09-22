@@ -13,7 +13,7 @@ Las preguntas se priorizan por su impacto sobre el producto y los datos. Una pre
 7. ¿Qué sensores están disponibles?
 8. ¿Qué frecuencia tienen?
 9. ¿Cuál es el horizonte útil de anticipación?
-10. ¿Mostraremos `anomaly score`, `risk score` o probabilidad?
+10. ¿Mostraremos `anomaly score`, `risk score` o probabilidad? El modelo ya entrega una probabilidad (`predict_proba` en `ml/notebooks/03_modelado`), mientras el prototipo de interfaz muestra un índice de condición que **no** es una probabilidad (`src/features/maintenance/types.ts`). Sigue abierta, pero ahora puede resolverse con esa evidencia.
 11. ¿Cómo se determina la criticidad?
 12. ¿Qué acción debería realizar mantenimiento ante una alerta?
 13. ¿Cómo se mide el éxito del MVP?
@@ -28,6 +28,7 @@ Las preguntas se priorizan por su impacto sobre el producto y los datos. Una pre
 - ¿Qué costos tienen una falsa alarma y una falla no detectada?
 - ¿Qué máquinas y usuarios participarán en la validación del MVP?
 - ¿Quién revisará las etiquetas y confirmará el resultado de una alerta?
+- ¿Cómo llega una predicción al producto: puntuación por lote hacia PostgreSQL, un servicio desplegado aparte, u otra forma? El prototipo de `ml/api` existe pero hoy no se despliega ni tiene contrato con la aplicación, y extraerlo como servicio requiere un ADR (ver `ARCHITECTURE.md`).
 
 ## P2 — decisiones posteriores a la validación
 

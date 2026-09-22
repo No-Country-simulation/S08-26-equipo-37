@@ -4,12 +4,13 @@
 
 > El dataset disponible determinará qué promesa predictiva puede realizar el MVP.
 
-No se diseñará el modelo de dominio final ni se elegirá una salida predictiva antes de conocer los datos reales.
+No se diseñará el modelo de dominio final ni se elegirá una salida predictiva antes de conocer los datos reales. **Los datos ya se conocen** (ver *Hechos conocidos*), así que esa condición se cumplió y la decisión sobre la salida predictiva pasó a estar sobre la mesa.
 
 ## Hechos conocidos
 
-- No existe todavía un dataset definitivo confirmado para el proyecto.
-- No se conocen aún la cantidad ni la familia de máquinas, los sensores disponibles, las fallas etiquetadas o el horizonte útil de anticipación.
+- **El dataset definitivo existe y está confirmado.** Es `datos/dataset_mantenimiento_predictivo_realista.csv` (v2): 72.000 filas horarias, 30 columnas, generado por el equipo con un script reproducible (SEED 42). Vive en Git LFS y su integridad se verifica en CI. Ver [`../ml/README.md`](../ml/README.md).
+- **Se conocen la cantidad y la familia de máquinas, los sensores, las fallas etiquetadas y el horizonte.** 25 máquinas (M-01 a M-25) en 10 familias de equipo y 4 líneas de producción; 8 señales de telemetría más odómetros; 7.623 filas con `target_falla_48h=1` sobre 261 eventos de falla; horizonte elegido de 48 h. Detalle y límites en [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) y [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md).
+- **Lo que sigue abierto no es el dataset, sino su validación industrial:** qué cuenta exactamente como falla (P0 n.º 2) y si la salida será probabilidad, score o ranking (P0 n.º 10). La decisión de la salida ya tiene evidencia: el modelo entrega una probabilidad.
 - Detección de anomalías, clasificación de fallas, probabilidad de falla y vida útil remanente resuelven problemas distintos y requieren evidencia diferente.
 
 ## Hipótesis por validar
@@ -25,7 +26,8 @@ No se diseñará el modelo de dominio final ni se elegirá una salida predictiva
 - Separar datos de entrenamiento, validación y prueba respetando tiempo y equipos para evitar fuga de información.
 - Empezar con el baseline más simple que responda la pregunta elegida y compararlo contra una referencia operativa.
 - No crear tablas de negocio a partir de nombres de columnas hipotéticos.
-- El dataset vive en **Git LFS** (`datos/`) y su integridad se verifica con `npm run data:validate`: el chequeo falla si el archivo es un puntero LFS y valida columnas, filas, máquinas, positivos y duplicados. En CI lo ejecuta el workflow **Dataset**, que hace checkout con `lfs: true` y solo se dispara cuando cambian el dataset o el propio validador. Al cambiar la versión del dataset hay que actualizar las constantes del validador (y registrarlo acá).
+- El dataset vive en **Git LFS** (todos los `*.csv` y `*.parquet`, en `datos/` y en `ml/datos/`) y su integridad se verifica con `npm run data:validate`: el chequeo falla si el archivo es un puntero LFS y valida columnas, filas, máquinas, positivos y duplicados. En CI lo ejecuta el workflow **Dataset**, que hace checkout con `lfs: true` y se dispara cuando cambian `datos/**`, `ml/**`, `.gitattributes`, el validador o `package.json`. Al cambiar la versión del dataset hay que actualizar las constantes del validador (y registrarlo acá).
+- Un segundo chequeo, `npm run artifacts:validate`, corre en el workflow **CI** en cada pull request y falla cuando un artefacto de datos o modelo trackeado supera 512 KiB, o sea cuando se salteó LFS. Lee tamaños del índice de git, así que no necesita `git-lfs` ni descargar objetos. Ver [ADR 0006](./adr/0006-binary-artifacts.md).
 
 ## Inventario mínimo antes de modelar
 
@@ -47,7 +49,7 @@ El primer entregable de datos será un diccionario y un perfil de calidad. Reci�
 
 ## Datasets de control disponibles
 
-No hay datos reales de la empresa: el MVP se desarrolla sobre el **dataset sintético del equipo** ([`datos/README.md`](../datos/README.md)) y se compara contra datasets públicos.
+No hay datos reales de la empresa: el MVP se desarrolla sobre el **dataset sintético del equipo** ([`ml/README.md`](../ml/README.md)) y se compara contra datasets públicos.
 
 | Fuente | Qué aporta | Uso previsto |
 | --- | --- | --- |

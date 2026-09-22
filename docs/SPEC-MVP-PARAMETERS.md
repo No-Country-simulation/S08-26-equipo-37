@@ -48,13 +48,30 @@
 
 | Grupo | Contenido | Decisión |
 | --- | --- | --- |
-| ✅ **Permitidas** — sensores | `temperatura_c`, `vibracion_mms`, `corriente_a`, `presion_bar`, `carga_pct`, `velocidad_rpm`, `voltaje_v`, `potencia_consumida_kw` | |
-| ✅ **Permitidas** — odómetros/contexto | `horas_operacion_totales`, `ciclos_acumulados`, `horas_desde_ultimo_mantenimiento`, `conteo_fallas_previas`, `estado_operativo` | |
+| ✅ **Permitidas** — sensores | `temperatura_c`, `vibracion_mms`, `corriente_a` 🚨, `presion_bar`, `carga_pct`, `velocidad_rpm`, `voltaje_v`, `potencia_consumida_kw` 🚨 | |
+| ✅ **Permitidas** — odómetros/contexto | `horas_operacion_totales`, `ciclos_acumulados`, `horas_desde_ultimo_mantenimiento`, `conteo_fallas_previas`, `estado_operativo` ⚠️ | |
 | ✅ **Permitidas** — activo | `tipo_equipo`, `modelo`, `linea_produccion`, `criticidad`, `potencia_nominal_kw`, `antiguedad_anos`, `costo_parada_hora_usd` | |
 | 🚫 **Prohibidas (leakage)** | `target_falla_48h`, `target_tipo_falla`, `target_rul_horas`, `target_estado_salud`, `codigo_alarma_plc`, `falla_inicio_disparo`, `falla_estado_causa` | |
 | Regla de construcción | El set se arma con **lista blanca explícita**, nunca "todas las columnas menos el target" | |
 
 > Dato para la reunión: `codigo_alarma_plc` y `target_estado_salud` predicen solos con **AUC 0,998**. Si entran como features, el modelo "da perfecto" y no sirve. Ver [`BACKLOG.md`](./BACKLOG.md#el-test-anti-leakage-con-números-reales-del-dataset).
+
+> 🚨 **`corriente_a` y `potencia_consumida_kw` no son utilizables tal como están.** El generador les aplica un sobreconsumo determinista del **15 %** a las filas con falla inminente, así que el cociente `potencia_consumida_kw / (potencia_nominal_kw × (0,12 + 0,88 × carga_pct / 100))` vale **1,15 en las positivas y 1,00 en las negativas**. Medido sobre el CSV canónico, una sola regla con eso recupera el target con **precisión 1,000 y recall 1,000** (TP 5.919 · FP 0 · FN 0 · TN 61.036). Mientras estas dos columnas estén en la matriz, ninguna métrica del baseline mide capacidad predictiva. Ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) §4.1 bis.
+>
+> ⚠️ **`estado_operativo`**: también filtra el futuro —el 91,5 % de las filas con la máquina detenida son positivas, porque las fallas vienen en ráfagas—. Sirve como contexto de producto, no como feature de modelo.
+>
+> Ninguna de estas dos la habría detectado una auditoría de una sola columna: la fuga de la potencia vive en una **relación entre columnas**. Falta en el repo la prueba que sí las detecta: **intentar reconstruir el target desde el conjunto de features**.
+
+> **Nota de divergencia (2026-09-20).** El baseline del PR #44 **no sigue esta propuesta**, y la regla de "lista blanca explícita" quedó incumplida:
+>
+> | Punto | Este documento propone | El modelo implementado usa |
+> | --- | --- | --- |
+> | Features de activo | 7 columnas (tipo, modelo, línea, criticidad, potencia, antigüedad, costo) | Las 7 **más `id_maquina` y `marca`**, que no están en la lista blanca |
+> | `velocidad_rpm` | Permitida | **Excluida** por redundante |
+> | `estado_operativo` | Permitida como contexto operativo | **Excluida** por fuga de datos: era una de las dos columnas que filtraban el futuro |
+> | Features derivadas | El §5 las define | Aparecieron 4 que no están en ninguna lista: `vibracion_critica` (>15 mm/s), `temperatura_critica` (>75 °C), `mes`, `dia_semana` |
+>
+> El uso de `id_maquina` como feature es el punto más delicado: combinado con la partición temporal (que no agrupa por equipo), habilita al modelo a memorizar comportamiento por máquina. Consecuencias y el resto de los límites en [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md).
 
 ## 5. Ventanas y variables derivadas
 
@@ -64,6 +81,8 @@
 | Dirección de la ventana | Solo **pasado** (`shift`, sin ventanas centradas) | | Ventana centrada = leakage |
 | Deltas | Cambio vs. 6 h y 24 h antes | | Captura tendencia |
 | Agregados por activo | Media histórica de la máquina | | Contextualiza el valor actual |
+
+> **Nota de divergencia (2026-09-20).** La implementación usa ventanas de **3, 6 y 12 h con media y desvío solamente** (18 features derivadas), **sin** las ventanas de 24 y 48 h, sin máximo, **sin deltas** y **sin agregados por activo** que propone esta tabla. La dirección es la correcta —solo pasado, sin ventanas centradas—, que era la parte crítica para no filtrar el futuro.
 
 ## 6. Nulos, outliers y calidad
 
@@ -75,6 +94,13 @@
 | Picos inyectados | Flag + exclusión de agregados o winsorizado; **nunca** borrar la fila | |
 | Picos de degradación real | Se conservan como señal (no winsorizar) | |
 | Duplicados | Constraint único `(id_maquina, fecha_hora)`; verificado: 0 | |
+
+> **Nota de divergencia (2026-09-20).** Sobre la primera fila: la implementación **filtró** `estado_operativo == 1` y quitó esas **1.530 filas** (72.000 → 70.470), documentándolo como "Depuración de Horas Muertas". Es lo contrario de lo que dice esta tabla. La consecuencia es que el modelo nunca vio una máquina detenida y el contrato de inferencia no manda `estado_operativo`, así que una lectura de máquina apagada se puntúa como si estuviera en marcha (ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) §4.8).
+>
+> **Y dos divergencias más, medidas celda por celda contra el CSV crudo** (ver §3.7 del mismo documento):
+>
+> - *"Sensor nulo: Guardar NULL; si se imputa, en columna aparte con flag"* → se imputó **en la misma columna y sin flag**, con **forward-fill**. Hoy no se puede saber qué celdas son imputadas mirando el dataset limpio.
+> - *"Picos inyectados: Flag + exclusión de agregados o winsorizado; nunca borrar la fila"* → **no se aplicó ninguna de las tres cosas**. En las siete columnas de sensores **0 celdas cambiaron de valor**: no hubo tratamiento de outliers. Peor: el forward-fill **duplicó** los picos cuyo vecino siguiente quedó nulo (11 picos de vibración pasaron de 274 a 285).
 
 ## 7. Partición de datos y validación
 
@@ -96,6 +122,22 @@
 | Salida en la app | Estado de salud + P(48h) + **prioridad** + motivo (variables explicativas) | | |
 | Fórmula de prioridad | `P(48h) × peso(criticidad) × costo_parada_normalizado` | | Definir los pesos de criticidad (Alta/Media/Baja) |
 | Factor adicional | Horas desde el último mantenimiento (opcional) | | Favorece equipos postergados |
+
+> **Nota de divergencia y medición (2026-09-20).** La comparación obligatoria no existía; **ahora está medida**, a igual presupuesto de alertas y con un piso de azar. Resultado sobre abril (porcentaje de eventos de falla detectados con al menos una alerta en las 48 h previas):
+>
+> | Alertas en el mes | Modelo | Calendario | Azar |
+> | --- | --- | --- | --- |
+> | 50 (~2 por máquina) | **19,2 %** | 5,8 % | 11,7 % |
+> | 100 (~4 por máquina) | **32,7 %** | 5,8 % | 22,1 % |
+> | 250 (~10 por máquina) | 38,5 % | 5,8 % | **44,9 %** |
+> | 1.000 (~40 por máquina) | 69,2 % | 19,2 % | **92,6 %** |
+>
+> Dos consecuencias para esta tabla:
+>
+> 1. **La métrica principal "recall ≥ 70–80 %" no dice a qué nivel se mide.** Por fila se alcanza 0,87 con el modelo actual; por **evento** —lo que experimenta un operario— el modelo detecta **19–33 %** con un presupuesto realista de 2–4 alertas por máquina al mes. Conviene redefinirla como *"eventos detectados con al menos N horas de anticipación, con un presupuesto de A alertas por máquina al mes"*.
+> 2. **La "métrica secundaria: alertas por semana" deja de ser secundaria**: es la que hace comparables las dos columnas. Y el **piso del azar** debería agregarse como tercera referencia obligatoria, porque con presupuestos altos el azar detecta más eventos que el modelo.
+>
+> Detalle y salvedades en [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) §4.4.
 
 ## 9. Frecuencia y operación
 
@@ -137,7 +179,7 @@ npm run data:validate     # valida el dataset (falla si es un puntero LFS)
 ```
 
 - Dataset canónico: [`datos/dataset_mantenimiento_predictivo_realista.csv`](../datos/dataset_mantenimiento_predictivo_realista.csv) (Git LFS, commit `c8a224a`)
-- Diccionario oficial: [`datos/README.md`](../datos/README.md) · Generador reproducible: [`datos/script_generacion_de_datos.ipynb`](../datos/script_generacion_de_datos.ipynb) (SEED = 42)
+- Diccionario oficial: [`ml/README.md`](../ml/README.md) · Generador reproducible: [`ml/notebooks/01_generacion/script_generacion_de_datos.ipynb`](../ml/notebooks/01_generacion/script_generacion_de_datos.ipynb) (SEED = 42)
 - Guía del backlog: [`BACKLOG.md`](./BACKLOG.md) · Estrategia de datos: [`DATA-STRATEGY.md`](./DATA-STRATEGY.md)
 - **Propuesta de horizonte extendido**: [`RUL-STRATEGY.md`](./RUL-STRATEGY.md) — probabilidad a 7/30/90 días y RUL en rango; es el insumo para decidir si el MVP incorpora información más allá de las 48 h (ver §11 de ese documento: 3 preguntas y 3 opciones)
 - Issues relacionados: [#10](../../issues/10) · [#11](../../issues/11) · [#13](../../issues/13) · [#14](../../issues/14) · [#15](../../issues/15) · [#25](../../issues/25)

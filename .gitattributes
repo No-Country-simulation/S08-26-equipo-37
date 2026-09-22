@@ -1,3 +1,12 @@
-datos/dataset_mantenimiento_predictivo_realista.csv filter=lfs diff=lfs merge=lfs -text
-datos/dataset_limpio.parquet filter=lfs diff=lfs merge=lfs -text
-ml/datos/*.parquet filter=lfs diff=lfs merge=lfs -text
+# Data artifacts always go through Git LFS so the repository history stays
+# small: the index keeps a ~130-byte pointer instead of the file itself.
+#
+# The rules are by extension on purpose. Matching only `datos/` is what allowed
+# a 16 MB duplicate of the dataset to be committed under `ml/datos/` in #44 and
+# be copied into every clone from then on.
+#
+# See docs/DEVELOPMENT.md (Git LFS requirement) and
+# scripts/validate-artifacts.mjs (the check that fails when a data artifact
+# reaches the index without LFS).
+*.csv filter=lfs diff=lfs merge=lfs -text
+*.parquet filter=lfs diff=lfs merge=lfs -text

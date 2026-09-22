@@ -160,10 +160,10 @@ Riesgo estimado de falla; máquinas en estado normal / bajo observación / riesg
 
 | Pendiente | Estado | Evidencia |
 |---|---|---|
-| Semántica exacta de "falla" | ✅ **Resuelto** | Diccionario §3: **Disparo** (`falla_inicio_disparo`, 261 pulsos, hora del colapso) vs **Convalecencia** (`falla_estado_causa`, 1.661 horas en taller, MTTR ≈ 6,4 h/falla). Columnas renombradas en v2 para expresarlo. |
-| Data dictionary | ✅ **Resuelto** | `datos/README.md` del repo (30 columnas, 6 bloques, unidades). |
-| Ground truth de anomalías + script/seed | ✅ **Resuelto** | `datos/script_generacion_de_datos.ipynb` (SEED=42): 280 spikes vibración (25–52 mm/s), 220 de voltaje, 150 de temperatura, ~2,5 % NaN/sensor + bloques blackout. Permite puntuar el pipeline de limpieza. |
-| Leakage (`codigo_alarma_plc` / `target_estado_salud`) | ✅ **Resuelto** | Notebook §4–5: alarmas y targets se generan desde columnas internas que luego se descartan → son **salidas/monitoreo, no features**. |
+| Semántica exacta de "falla" | ✅ **Resuelto** (semántica) · ⚠️ **definición operativa sin ratificar** | Diccionario §3: **Disparo** (`falla_inicio_disparo`, 261 pulsos, hora del colapso) vs **Convalecencia** (`falla_estado_causa`, 1.661 horas en taller, MTTR ≈ 6,4 h/falla). Columnas renombradas en v2 para expresarlo. Falta ratificar la definición operativa del §3 de [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) (columna "Decisión" vacía) y cerrar la pregunta P0 n.º 2 de [`OPEN-QUESTIONS.md`](./OPEN-QUESTIONS.md), que la sigue listando como abierta. |
+| Data dictionary | ✅ **Resuelto** | [`../ml/README.md`](../ml/README.md) (30 columnas, 6 bloques, unidades). |
+| Ground truth de anomalías + script/seed | ✅ **Resuelto** | [`../ml/notebooks/01_generacion/script_generacion_de_datos.ipynb`](../ml/notebooks/01_generacion/script_generacion_de_datos.ipynb) (SEED=42): 280 spikes vibración (25–52 mm/s), 220 de voltaje, 150 de temperatura, ~2,5 % NaN/sensor + bloques blackout. Permite puntuar el pipeline de limpieza. |
+| Leakage | ⚠️ **Parcialmente resuelto** | Se identificaron `codigo_alarma_plc` y `target_estado_salud`, que son salidas. **Faltaba la tercera: `estado_operativo`**, que no es un target sino una señal operativa de planta, y también filtraba el futuro. La detectó el entrenamiento del PR #44 con una prueba de permutación, después de que el modelo diera 1,00 perfecto. Ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md) §4.1 y el aviso en [`BACKLOG.md`](./BACKLOG.md). |
 | Asignar **validador industrial** | 🔴 **Sigue abierto** | Decisión del equipo. |
 
 ---
@@ -266,7 +266,7 @@ RUL fino (regresión/supervivencia), predicción del **tipo** de falla como sali
 7. **Decisión de esquema Prisma** con el mapeo del §7.2 (Fase 2) + seed desde el CSV v2.
 8. **Priorización** (score × criticidad × costo) y **dashboard de riesgo por máquina** (F3/F5).
 9. **Alertas + feedback** (F6/F7) y **validación MVP** (F8).
-10. **Documento de limitaciones**: dataset sintético, censura RUL, leakage (declarado en el repo).
+10. **Documento de limitaciones**: dataset sintético, censura RUL, leakage (declarado en el repo) → [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md).
 
 ---
 
@@ -292,7 +292,7 @@ RUL fino (regresión/supervivencia), predicción del **tipo** de falla como sali
 | [`DATA-STRATEGY.md`](./DATA-STRATEGY.md) | Regla rectora, inventario mínimo y datasets de control |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`adr/`](./adr/) | Arquitectura vigente y decisiones registradas |
 | [`BACKLOG.md`](./BACKLOG.md) · [`MINUTES.md`](./MINUTES.md) | Qué significa cada tarea · minutas compiladas |
-| [`../datos/README.md`](../datos/README.md) | Diccionario oficial del dataset |
+| [`../ml/README.md`](../ml/README.md) | Diccionario oficial del dataset |
 
 Los materiales originales (documentos de trabajo previos) quedan en el historial de git del repositorio y del espacio compartido del equipo.
 

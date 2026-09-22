@@ -4,8 +4,8 @@
 
 - PredictiveMaintenance es una aplicación de soporte al mantenimiento industrial.
 - Su propósito eventual es transformar datos de sensores e historial de mantenimiento en información útil para detectar señales de deterioro, priorizar equipos y planificar intervenciones.
-- Todavía no están definidos el dataset, la familia de máquinas, el modo de falla objetivo ni la salida predictiva del MVP.
-- El alcance predictivo definitivo depende de la evidencia disponible en los datos.
+- El **dataset**, la **familia de máquinas** y el **modo de falla objetivo** del MVP ya están definidos ([`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md)): telemetría horaria de 25 máquinas de mecanizado y una clasificación binaria de falla a 48 h. Lo que sigue abierto es la **salida predictiva** y su validación industrial ([`OPEN-QUESTIONS.md`](./OPEN-QUESTIONS.md)).
+- El alcance predictivo definitivo depende de la evidencia disponible en los datos, y esa evidencia ya está medida: ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md).
 
 ## Hipótesis del MVP
 
@@ -27,8 +27,8 @@ Estas decisiones se detallan y priorizan en [OPEN-QUESTIONS.md](./OPEN-QUESTIONS
 
 ## Fuera de alcance inicial
 
-- Prometer probabilidad de falla, tiempo hasta la falla o vida útil remanente sin datos que lo sustenten.
+- Prometer probabilidad de falla, tiempo hasta la falla o vida útil remanente **más allá de lo que los datos sostienen**. Hoy hay evidencia para una probabilidad a 48 h (PR-AUC 0,842 con partición temporal, precision 0,69) y **no** para RUL continuo, que está censurado en el dataset. Ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md).
 - Automatizar decisiones o intervenciones de mantenimiento.
 - Diseñar un dashboard final, reglas de negocio o modelos de dominio ficticios.
-- Autenticación, notificaciones, tiempo real, servicios predictivos separados y MLOps antes de que exista una necesidad validada.
+- Autenticación, notificaciones, tiempo real y MLOps antes de que exista una necesidad validada. Existe un **prototipo local** de servicio predictivo en `ml/api` (FastAPI + LightGBM) que **no se despliega**: no tiene Dockerfile, no está en `compose.yaml` y ningún workflow lo construye. Ver [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 - Infraestructura distribuida, microservicios o integraciones hipotéticas.
