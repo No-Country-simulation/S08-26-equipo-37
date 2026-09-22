@@ -29,7 +29,7 @@ jobs:
       # The dataset is stored with Git LFS: without `lfs: true` the checkout
       # leaves a three-line pointer and the validation would check that instead.
       - name: Check out repository with Git LFS
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           lfs: true
 
