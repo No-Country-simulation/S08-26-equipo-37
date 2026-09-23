@@ -97,13 +97,13 @@ def predict_falla(payload: TelemetriaPayloadSimplificado):
     fila_actual['ciclos_acumulados'] = payload.ciclos_acumulados
     fila_actual['horas_desde_ultimo_mantenimiento'] = payload.horas_desde_ultimo_mantenimiento
     fila_actual['conteo_fallas_previas'] = payload.conteo_fallas_previas
-    
-    # E. ALINEACIÓN PRECISA CON TU IMPRESIÓN DE X_TRAIN (42 Columnas)
+
+        # E. ALINEACIÓN PRECISA DE 41 COLUMNAS PARA EL MODELO DEFINITIVO
     columnas_modelo = [
         'id_maquina', 'tipo_equipo', 'modelo', 'linea_produccion', 'antiguedad_anos', 'criticidad',
         'costo_parada_hora_usd', 'potencia_nominal_kw', 'marca', 'horas_operacion_totales', 'ciclos_acumulados',
-        'horas_desde_ultimo_mantenimiento', 'conteo_fallas_previas', 'carga_pct', 'voltaje_v', 'corriente_a',
-        'potencia_consumida_kw', 'temperatura_c', 'vibracion_mms', 'presion_bar', 'vibracion_critica',
+        'horas_desde_ultimo_mantenimiento', 'conteo_fallas_previas', 'carga_pct', 'voltaje_v', 
+        'temperatura_c', 'vibracion_mms', 'presion_bar', 'vibracion_critica',
         'temperatura_critica', 'mes', 'dia_semana', 'temperatura_c_roll_mean_3h', 'vibracion_mms_roll_mean_3h',
         'presion_bar_roll_mean_3h', 'temperatura_c_roll_std_3h', 'vibracion_mms_roll_std_3h', 'presion_bar_roll_std_3h',
         'temperatura_c_roll_mean_6h', 'vibracion_mms_roll_mean_6h', 'presion_bar_roll_mean_6h', 'temperatura_c_roll_std_6h',
@@ -111,7 +111,7 @@ def predict_falla(payload: TelemetriaPayloadSimplificado):
         'vibracion_mms_roll_mean_12h', 'presion_bar_roll_mean_12h', 'temperatura_c_roll_std_12h',
         'vibracion_mms_roll_std_12h', 'presion_bar_roll_std_12h'
     ]
-    
+
     # Reindexamos de forma estricta para garantizar el orden matemático exacto
     df_inferencia = fila_actual.reindex(columns=columnas_modelo).fillna(0)
     
