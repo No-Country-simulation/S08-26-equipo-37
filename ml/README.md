@@ -80,6 +80,12 @@ Evolución Temporal de un Activo:
                         (261 eventos)                         (1.661 horas acumuladas)
 
 
+# 📊 Proyecto de Mantenimiento Predictivo - Área de Data Science
+
+Bienvenido al módulo central de Inteligencia Artificial del proyecto. El objetivo de esta área es transformar la telemetría histórica de la planta en alertas tempranas de fallas para optimizar los tiempos de operación y reducir los costos de parada por averías mecánicas.
+
+---
+
 ## 📌 1. Información General y Contexto Operativo
 
 ### 🎯 Objetivos del Negocio
@@ -105,7 +111,7 @@ Para este dataset se evaluaron 4 horizontes predictivos posibles según la neces
 * **Algoritmo Seleccionado:** `LightGBM Classifier` (Gradient Boosting optimizado).
 * **Target de Predicción:** `target_falla_48h` (Clasificación Binaria: 1 = Falla Inminente, 0 = Operación Normal).
 * **Alineación de Columnas:** Matriz purificada de **41 columnas predictivas**. Se eliminaron las variables con *Data Leakage* (`codigo_alarma_plc`, `estado_operativo` y `corriente_a`) para garantizar que el modelo aprenda de la física real de los sensores y no de pistas artificiales del simulador.
-* **Rendimiento Legítimo Obtenido:** **PR-AUC: 0.8311** y un **Recall del 87%** en el mes piloto de evaluación.
+* **Rendimiento Legítimo Obtenido:** **PR-AUC: 0.8311** y un **Recall del 87%** en el mes piloto de evaluation.
 
 ---
 
@@ -166,4 +172,23 @@ Para este dataset se evaluaron 4 horizontes predictivos posibles según la neces
   "alerta_estado": "Riesgo crítico",
   "color_hex": "#e74c3c"
 }
+```
+
+---
+
+## 🛠️ 5. Justificación Técnica: Disparo de Falla (261) vs. Convalecencia en Taller (1.661)
+
+Para evitar confusiones en los modelos y justificar la física del dataset ante los evaluadores, se distingue claramente entre Evento y Estado:
+
+### Evolución Temporal de un Activo:
+```text
+[ Operación Normal ] —> [ DISPARO DE ROTURA ] —> [ PARADA EN TALLER (MTTR) ] —> [ PUESTA A PUNTO ]
+
+                            |                                  |
+                    Hora exacta del                     Horas consecutivas
+                        colapso                     esperando repuesto/reparando
+
+                            |                                  |
+                falla_inicio_disparo = 1             falla_estado_causa = "Causa"
+                     (261 eventos)                    (1.661 horas acumuladas)
 ```
