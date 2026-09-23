@@ -114,8 +114,20 @@ The Compose credentials are local-only. If port `5432` is already in use, stop t
 
 ## Dependencies
 
-Pin direct dependencies and review their licenses and advisories before adding them. ESLint 9 is retained because the official Next.js 16 configuration is not yet reliably compatible with ESLint 10. The `deepmerge-ts` and `mysql2` overrides patch advisories in Prisma CLI transitive dependencies; remove them once Prisma carries fixed versions and all Prisma checks still pass.
+Pin direct dependencies and review their licenses and advisories before adding them. ESLint is pinned to a 10.x line compatible with the Next.js 16 configuration. Major bumps of `eslint`, `next`, `typescript` and `@types/node` are evaluated by hand, not by Dependabot, because they define the project's direction — and `@types/node` must track the Node version in `.nvmrc` (currently 24.x). The `deepmerge-ts` and `mysql2` overrides patch advisories in Prisma CLI transitive dependencies; remove them once Prisma carries fixed versions and all Prisma checks still pass.
 
 ## Git
 
 Create atomic Conventional Commits. Inspect `git status`, the unstaged diff, and the staged diff before every commit. Never stage secrets, generated clients, build output, or unrelated changes.
+
+## Naming
+
+Repo plumbing is in English; human-readable content may be in Spanish.
+
+| What | Language | Format |
+|---|---|---|
+| Folders, file names, branches | English | lowercase kebab-case, ASCII only |
+| Code identifiers, Prisma models, DB tables and columns | English | as the framework requires |
+| Document prose, reports, comments | Either, per audience | — |
+
+Dates use `YYYY-MM-DD`. **Pending exception until after the MVP delivery:** `analisis/`, `datos/`, `ml/datos/` and two notebooks keep their Spanish names — renaming them touches six referencing files, including the dataset CI workflow, so it goes in one coordinated pull request.

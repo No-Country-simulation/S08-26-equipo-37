@@ -60,6 +60,13 @@ Prefer `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`
 
 Name branches with `feat/`, `fix/`, `refactor/`, `docs/`, `chore/`, or `test/` followed by a short kebab-case description, for example `feat/machine-inventory` or `fix/duplicate-alerts`.
 
+## Naming
+
+- **English for everything a machine reads:** folder names, file names, branch names, code identifiers, database tables and columns.
+- **Spanish is fine for what a person reads:** document prose, reports, comments and meeting notes.
+- Folder and file names use **lowercase ASCII kebab-case**: `informe-markov.md`, never `Informe Markov.md` or `informe_markov.md`. No accents, no spaces.
+- **Pending exception, until after the MVP delivery:** `analisis/`, `datos/`, `ml/datos/` and two notebooks under `ml/notebooks/` keep their Spanish names. Six files reference those paths — one of them `.github/workflows/dataset.yml` — so the rename is a single coordinated pull request after the deadline, never mid-sprint.
+
 ## Documentation maintenance
 
 Update the relevant document for every important architectural decision. Add an ADR under `docs/adr/` when a decision has meaningful alternatives or lasting consequences.
