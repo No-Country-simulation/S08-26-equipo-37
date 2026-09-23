@@ -80,12 +80,6 @@ Evolución Temporal de un Activo:
                         (261 eventos)                         (1.661 horas acumuladas)
 
 
-# 🏭 Proyecto de Mantenimiento Predictivo - Área de Data Science
-
-Bienvenido al módulo central de Inteligencia Artificial del proyecto. El objetivo de esta área es transformar la telemetría histórica de la planta en alertas tempranas de fallas para optimizar los tiempos de operación y reducir los costos de parada por averías mecánicas.
-
----
-
 ## 📌 1. Información General y Contexto Operativo
 
 ### 🎯 Objetivos del Negocio
