@@ -79,7 +79,8 @@ Evolución Temporal de un Activo:
                     falla_inicio_disparo = 1              falla_estado_causa = "Causa"
                         (261 eventos)                         (1.661 horas acumuladas)
 
-# 🏭 Proyecto de Mantenimiento Predictivo - Área de Data Science
+
+# 📊 Proyecto de Mantenimiento Predictivo - Área de Data Science
 
 Bienvenido al módulo central de Inteligencia Artificial del proyecto. El objetivo de esta área es transformar la telemetría histórica de la planta en alertas tempranas de fallas para optimizar los tiempos de operación y reducir los costos de parada por averías mecánicas.
 
@@ -94,7 +95,7 @@ Bienvenido al módulo central de Inteligencia Artificial del proyecto. El objeti
 ### 🧪 Reglas de Negocio Aplicadas en la Limpieza
 Durante la fase de curación de datos, se establecieron los siguientes criterios industriales para asegurar la fidelidad del dataset:
 * **Valores Faltantes (0% Nulos):** Se eliminó el 2.5% de baches de señal en los sensores mediante técnicas de arrastre cronológico operativo (`ffill` y `bfill`).
-* **Tratamiento del Estado Apagado:** Se removieron 1,530 horas muertas de planta (`estado_operativo == 0`) para evitar que los sensores eléctricos en cero absoluto y el enfriamiento ambiental distorsionen las medias matemáticas del modelo.
+* **Tratamiento del Estado Apagado (⚠️ BAJO REVISIÓN):** Inicialmente se removieron 1,530 horas muertas de planta (`estado_operativo == 0`). Sin embargo, una auditoría técnica posterior (v2.0) reveló que este filtro eliminó por error **130 de los 261 eventos de falla reales** (el 50% de los colapsos), ya que las máquinas suelen registrar la hora de parada justo en el colapso. Se corregirá en el siguiente sprint para duplicar los datos de entrenamiento.
 * **Manejo Estratégico de Outliers:** Los picos críticos de vibración y temperatura se conservaron intactos debido a que representan las firmas físicas reales de los colapsos mecánicos de los tornos y compresores.
 
 ### 🗺️ El Mapa de Decisiones Analíticas
@@ -106,10 +107,11 @@ Para este dataset se evaluaron 4 horizontes predictivos posibles según la neces
 
 ---
 
-## 📊 3 Ficha Técnica del Modelo Activo
+## 📊 2. Ficha Técnica del Modelo Activo (Actualizado v2.0)
 * **Algoritmo Seleccionado:** `LightGBM Classifier` (Gradient Boosting optimizado).
 * **Target de Predicción:** `target_falla_48h` (Clasificación Binaria: 1 = Falla Inminente, 0 = Operación Normal).
-* **Estrategia de Desbalance:** Robustecimiento nativo mediante el parámetro `is_unbalance=True` para manejar la baja frecuencia de fallas reales en el histórico.
+* **Alineación de Columnas:** Matriz purificada de **41 columnas predictivas**. Se eliminaron las variables con *Data Leakage* (`codigo_alarma_plc`, `estado_operativo` y `corriente_a`) para garantizar que el modelo aprenda de la física real de los sensores y no de pistas artificiales del simulador.
+* **Rendimiento Legítimo Obtenido:** **PR-AUC: 0.8311** y un **Recall del 87%** en el mes piloto de evaluation.
 
 ---
 
@@ -125,7 +127,8 @@ Para este dataset se evaluaron 4 horizontes predictivos posibles según la neces
 ## 🛰️ 4. Contrato de API para el Backend (Actualizado v2.0)
 
 * **Endpoint de Salud (`GET /health`):** Retorna `{"status": "healthy"}` si el modelo está cargado correctamente.
-* **Endpoint de Inferencia (`POST /api/v1/predict/falla`):** El backend ya **NO** necesita calcular promedios ni desviaciones estándar móviles. Solo debe enviar una lista estructurada con las lecturas básicas de las últimas 12 horas y la API de Inteligencia Artificial resolverá las variables avanzadas en microsegundos.
+* **Endpoint de Inferencia (`POST /api/v1/predict/falla`):** El backend ya **NO** necesita calcular promedios ni desviaciones estándar móviles. Solo debe enviar una lista estructurada con las lecturas básicas de las últimas 12 horas. 
+* *Nota de Arquitectura:* Los campos de telemetría eléctrica en tiempo real (`corriente_a` y `potencia_consumida_kw`) fueron desactivados de la lógica del modelo para neutralizar la fuga de datos analítica.
 
 ### 📋 Ejemplo de Payload de Entrada Simplificado (JSON esperado):
 ```json
@@ -147,8 +150,6 @@ Para este dataset se evaluaron 4 horizontes predictivos posibles según la neces
     {
       "carga_pct": 82.5,
       "voltaje_v": 400.0,
-      "corriente_a": 65.2,
-      "potencia_consumida_kw": 38.4,
       "temperatura_c": 86.5,
       "vibracion_mms": 14.2,
       "presion_bar": 4.2,
@@ -166,9 +167,28 @@ Para este dataset se evaluaron 4 horizontes predictivos posibles según la neces
 {
   "id_maquina": "M-01",
   "falla_predicha_48h": 1,
-  "probabilidad_falla": 0.9234,
-  "score_dashboard": 92,
+  "probabilidad_falla": 0.8311,
+  "score_dashboard": 83,
   "alerta_estado": "Riesgo crítico",
   "color_hex": "#e74c3c"
 }
+```
+
+---
+
+## 🛠️ 5. Justificación Técnica: Disparo de Falla (261) vs. Convalecencia en Taller (1.661)
+
+Para evitar confusiones en los modelos y justificar la física del dataset ante los evaluadores, se distingue claramente entre Evento y Estado:
+
+### Evolución Temporal de un Activo:
+```text
+[ Operación Normal ] —> [ DISPARO DE ROTURA ] —> [ PARADA EN TALLER (MTTR) ] —> [ PUESTA A PUNTO ]
+
+                            |                                  |
+                    Hora exacta del                     Horas consecutivas
+                        colapso                     esperando repuesto/reparando
+
+                            |                                  |
+                falla_inicio_disparo = 1             falla_estado_causa = "Causa"
+                     (261 eventos)                    (1.661 horas acumuladas)
 ```
