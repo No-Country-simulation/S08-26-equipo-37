@@ -1,19 +1,12 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
-import {
-  activityEvents,
-  alerts,
-  dashboardSummary,
-  machines,
-  priorityMachines,
-} from "@/features/maintenance/mock-data";
 import type { ActivityEvent, Alert, HealthStatus } from "@/features/maintenance/types";
+import type { DashboardReadModel } from "@/modules/maintenance/types";
 
-import { MachineVisual } from "./machine-visual";
+import { MachineImage } from "./machine-image";
 import { SensorTrend } from "./sensor-trend";
 import { StatusBadge } from "./status-badge";
-
-const SIMULATED_NOW = Date.parse("2026-04-27T10:00:00-03:00");
 
 const timeFormatter = new Intl.DateTimeFormat("es-AR", {
   hour: "2-digit",
@@ -21,22 +14,10 @@ const timeFormatter = new Intl.DateTimeFormat("es-AR", {
   timeZone: "America/Argentina/Buenos_Aires",
 });
 
-const alertPresentation: Record<
-  Alert["severity"],
-  { label: string; className: string }
-> = {
-  critical: {
-    label: "Crítica",
-    className: "border-rose-300/30 bg-rose-300/10 text-rose-100",
-  },
-  high: {
-    label: "Alta",
-    className: "border-orange-300/30 bg-orange-300/10 text-orange-100",
-  },
-  medium: {
-    label: "Media",
-    className: "border-amber-300/30 bg-amber-300/10 text-amber-100",
-  },
+const alertPresentation: Record<Alert["severity"], { label: string; className: string }> = {
+  critical: { label: "Crítica", className: "text-rose-700" },
+  high: { label: "Alta", className: "text-orange-800" },
+  medium: { label: "Media", className: "text-amber-800" },
 };
 
 const alertStatusLabels: Record<Alert["status"], string> = {
@@ -47,383 +28,214 @@ const alertStatusLabels: Record<Alert["status"], string> = {
   closed: "Cerrada",
 };
 
-const activityPresentation: Record<
-  ActivityEvent["type"],
-  { label: string; className: string }
-> = {
-  alert: { label: "Alerta", className: "bg-rose-300" },
-  "status-change": { label: "Cambio de estado", className: "bg-amber-300" },
-  inspection: { label: "Inspección", className: "bg-teal-300" },
-  maintenance: { label: "Mantenimiento", className: "bg-sky-300" },
+const activityStyles: Record<ActivityEvent["type"], string> = {
+  alert: "bg-rose-600",
+  "status-change": "bg-amber-600",
+  inspection: "bg-slate-500",
+  maintenance: "bg-sky-600",
 };
 
 const riskBarStyles: Record<HealthStatus, string> = {
-  healthy: "bg-emerald-300",
-  watch: "bg-amber-300",
-  critical: "bg-rose-400",
-  maintenance: "bg-sky-300",
+  healthy: "bg-emerald-600",
+  watch: "bg-amber-600",
+  critical: "bg-rose-600",
+  maintenance: "bg-sky-600",
 };
 
-const machineById = new Map(machines.map((machine) => [machine.id, machine]));
-
-function formatAge(timestamp: string) {
-  const minutes = Math.max(0, Math.floor((SIMULATED_NOW - Date.parse(timestamp)) / 60_000));
-
-  return minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} h`;
-}
-
-export function DesktopCommandCenter() {
+export function DesktopCommandCenter({ data, userMenu }: { data: DashboardReadModel; userMenu: ReactNode }) {
+  const { activityEvents, alerts, dashboardSummary, machines, priorityMachines, canViewAlerts, canViewActivity } = data;
   const activeAlerts = alerts.filter((alert) => alert.status !== "closed");
-  const attentionMachines = priorityMachines.slice(0, 3);
-  const topMachine = attentionMachines[0];
-  const summaryCards = [
-    {
-      label: "Equipos monitoreados",
-      value: dashboardSummary.total,
-      helper: "Alcance de esta demo",
-      className: "border-white/10 bg-white/[0.035] text-slate-200",
-    },
-    {
-      label: "Estado normal",
-      value: dashboardSummary.counts.healthy,
-      helper: "Sin señales prioritarias",
-      className: "border-emerald-300/20 bg-emerald-300/[0.07] text-emerald-100",
-    },
-    {
-      label: "En observación",
-      value: dashboardSummary.counts.watch,
-      helper: "Seguir tendencia",
-      className: "border-amber-300/20 bg-amber-300/[0.07] text-amber-100",
-    },
-    {
-      label: "Riesgo crítico",
-      value: dashboardSummary.counts.critical,
-      helper: "Revisión prioritaria",
-      className: "border-rose-300/20 bg-rose-300/[0.08] text-rose-100",
-    },
-    {
-      label: "En mantenimiento",
-      value: dashboardSummary.counts.maintenance,
-      helper: "Intervención en curso",
-      className: "border-sky-300/20 bg-sky-300/[0.07] text-sky-100",
-    },
-    {
-      label: "Alertas activas",
-      value: dashboardSummary.activeAlerts,
-      helper: "Pendientes de cierre",
-      className: "border-sky-300/20 bg-sky-300/[0.07] text-sky-100",
-    },
+  const [topMachine, ...nextMachines] = priorityMachines.slice(0, 3);
+  const summary = [
+    { label: "Equipos", value: dashboardSummary.total, color: "bg-slate-400" },
+    { label: "Normales", value: dashboardSummary.counts.healthy, color: "bg-emerald-600" },
+    { label: "En observación", value: dashboardSummary.counts.watch, color: "bg-amber-600" },
+    { label: "Riesgo crítico", value: dashboardSummary.counts.critical, color: "bg-rose-600" },
+    { label: "En mantenimiento", value: dashboardSummary.counts.maintenance, color: "bg-sky-600" },
+    { label: "Alertas activas", value: canViewAlerts ? dashboardSummary.activeAlerts : null, color: "bg-slate-400" },
   ];
 
   return (
-    <div className="hidden min-h-screen bg-[#06101c] text-slate-100 xl:block">
-      <a className="skip-link" href="#desktop-content">
-        Ir al centro de operaciones
-      </a>
-
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#07111f]/95 backdrop-blur-xl">
-        <div className="mx-auto flex min-h-20 max-w-[1800px] items-center justify-between gap-8 px-8 py-4 2xl:px-12">
-          <a className="flex items-center gap-4" href="#desktop-summary">
-            <span className="grid size-11 place-items-center rounded-xl bg-teal-300 text-base font-black tracking-tight text-[#061019] shadow-[0_0_30px_rgba(94,234,212,0.18)]">
-              PM
-            </span>
+    <div className="hidden min-h-screen bg-[#f3f5f7] text-slate-900 xl:block">
+      <a className="skip-link" href="#desktop-content">Ir al centro de operaciones</a>
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto flex min-h-18 max-w-[1600px] items-center justify-between gap-8 px-8 2xl:px-12">
+          <a className="flex items-center gap-3" href="#desktop-summary">
+            <span className="grid size-10 place-items-center rounded border border-slate-300 font-mono text-sm font-bold tracking-tighter text-slate-900">PM</span>
             <span>
-              <span className="block text-lg font-semibold tracking-tight text-white">Centro de operaciones</span>
-              <span className="block text-sm text-slate-400">PredictiveMaintenance · Vista de planta</span>
+              <span className="block text-sm font-semibold tracking-tight text-slate-900">PredictiveMaintenance</span>
+              <span className="block text-xs text-slate-600">Centro de operaciones</span>
             </span>
           </a>
-
-          <nav aria-label="Secciones del centro de operaciones" className="flex items-center gap-2">
-            <a className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white" href="#desktop-attention">
-              Atención inmediata
-            </a>
-            <a className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white" href="#desktop-alerts">
-              Alertas
-            </a>
-            <a className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white" href="#desktop-machines">
-              Equipos
-            </a>
+          <nav aria-label="Secciones del centro de operaciones" className="flex gap-6 text-sm font-medium text-slate-600">
+            <a className="inline-flex min-h-11 items-center hover:text-slate-900" href="#desktop-attention">Prioridades</a>
+            <a className="inline-flex min-h-11 items-center hover:text-slate-900" href="#desktop-machines">Equipos</a>
+            <a className="inline-flex min-h-11 items-center gap-2 hover:text-slate-900" href="#desktop-alerts">Alertas <span className="font-mono text-xs text-slate-700">{activeAlerts.length.toString().padStart(2, "0")}</span></a>
           </nav>
-
-          <div className="shrink-0 text-right">
-            <span className="inline-flex items-center gap-2 rounded-full border border-teal-300/25 bg-teal-300/10 px-3 py-1 text-sm font-bold text-teal-100">
-              <span aria-hidden="true" className="size-2 rounded-full bg-teal-300" />
-              Demo simulada
-            </span>
-            <time className="mt-1.5 block text-sm text-slate-400" dateTime="2026-04-27T10:00:00-03:00">
-              Corte estático · 27 abr 2026 · 10:00
-            </time>
-          </div>
+          {userMenu}
         </div>
-        <p className="border-t border-amber-200/10 bg-amber-200/[0.055] px-8 py-2 text-center text-sm font-medium text-amber-100/90">
-          Datos, alertas y puntajes simulados. Este panel no está conectado a sensores, backend ni modelo predictivo.
-        </p>
+        <p className="border-t border-slate-200 bg-slate-50 px-8 py-2 text-center text-xs text-slate-600">Datos y puntajes simulados · Sin conexión a sensores ni modelo predictivo · Ninguna intervención automática</p>
       </header>
 
-      <main className="mx-auto max-w-[1800px] scroll-mt-36 px-8 py-8 2xl:px-12" id="desktop-content">
-        <section aria-labelledby="desktop-title" className="scroll-mt-36" id="desktop-summary">
+      <main className="mx-auto max-w-[1600px] scroll-mt-32 px-8 py-8 2xl:px-12" id="desktop-content">
+        <section aria-labelledby="desktop-title" className="scroll-mt-32" id="desktop-summary">
           <div className="flex items-end justify-between gap-8">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.17em] text-teal-300">Panorama operativo</p>
-              <h1 className="mt-2 text-4xl font-semibold tracking-[-0.04em] text-white 2xl:text-5xl" id="desktop-title">
-                Qué requiere atención ahora
-              </h1>
-              <p className="mt-3 max-w-3xl text-lg leading-7 text-slate-300">
-                Estado global, prioridades y señales principales para decidir la próxima revisión de campo.
-              </p>
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-900" id="desktop-title">Estado de planta</h1>
+              <p className="mt-2 text-sm text-slate-600">{dashboardSummary.total} {dashboardSummary.total === 1 ? "equipo" : "equipos"} en seguimiento · {dashboardSummary.highCriticality} de criticidad alta</p>
             </div>
-            <p className="max-w-md text-right text-sm leading-6 text-slate-400">
-              Las recomendaciones son orientativas y requieren validación humana antes de cualquier intervención.
-            </p>
-          </div>
-
-          <ul className="mt-7 grid grid-cols-3 gap-3 xl:grid-cols-6">
-            {summaryCards.map((card) => (
-              <li className={`rounded-2xl border p-5 ${card.className}`} key={card.label}>
-                <data className="block text-4xl font-semibold tabular-nums tracking-tight text-white" value={card.value}>
-                  {card.value}
-                </data>
-                <p className="mt-4 text-base font-bold text-current">{card.label}</p>
-                <p className="mt-1 text-sm leading-5 text-slate-400">{card.helper}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section aria-labelledby="desktop-attention-title" className="mt-10 scroll-mt-36" id="desktop-attention">
-          <div className="mb-5 flex items-end justify-between gap-6">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.17em] text-rose-300">Atención inmediata</p>
-              <h2 className="mt-1 text-3xl font-semibold tracking-tight text-white" id="desktop-attention-title">
-                Primeros equipos a revisar
-              </h2>
+            <div className="text-right">
+              <p className="text-xs text-slate-600">Corte de los datos simulados</p>
+              <time className="mt-1 block font-mono text-sm tabular-nums text-slate-700" dateTime="2026-04-27T10:00:00-03:00">27 ABR 2026 / 10:00</time>
             </div>
-            <p className="text-base text-slate-400">Orden ilustrativo según índice demo</p>
           </div>
-
-          <ol className="grid grid-cols-3 gap-5">
-            {attentionMachines.map((machine, index) => (
-              <li className="overflow-hidden rounded-3xl border border-white/10 bg-[#0a1828] shadow-xl shadow-black/20" key={machine.id}>
-                <div className="relative h-40 border-b border-white/10 bg-[#091827] 2xl:h-48">
-                  <MachineVisual className="size-full" label={`${machine.type} ${machine.id}`} visual={machine.visual} />
-                  <span className="absolute left-4 top-4 rounded-full border border-rose-200/25 bg-[#07111f]/90 px-3 py-1.5 text-sm font-bold text-rose-100">
-                    Prioridad #{index + 1}
-                  </span>
-                  <span className="absolute right-4 top-4 rounded-xl bg-[#07111f]/90 px-3 py-2 text-right shadow-lg">
-                    <span className="block text-xs font-semibold uppercase tracking-wider text-slate-400">Índice demo</span>
-                    <data className="block text-3xl font-bold tabular-nums text-white" value={machine.riskScore}>
-                      {machine.riskScore}
-                    </data>
-                  </span>
-                </div>
-
-                <div className="p-5 2xl:p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-mono text-sm font-bold text-teal-300">{machine.id}</p>
-                      <h3 className="mt-1 text-xl font-bold text-white 2xl:text-2xl">{machine.name}</h3>
-                      <p className="mt-1 text-sm text-slate-400">{machine.sector}</p>
-                      <p className="mt-2 text-sm font-semibold text-slate-300">
-                        Criticidad {machine.criticality.toLowerCase()}
-                      </p>
-                    </div>
-                    <StatusBadge label={machine.statusLabel} status={machine.status} />
-                  </div>
-
-                  <div className="mt-5 rounded-2xl border border-amber-200/15 bg-amber-200/[0.055] p-4">
-                    <p className="text-sm font-bold text-amber-100">Señal principal</p>
-                    <p className="mt-1 text-base leading-6 text-slate-200">{machine.signal}</p>
-                  </div>
-
-                  <p className="mt-4 text-base leading-6 text-slate-300">{machine.recommendation}</p>
-                  <Link
-                    className="mt-4 inline-flex min-h-11 items-center rounded-lg font-bold text-teal-300 hover:text-teal-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300"
-                    href={`/machines/${machine.id}?from=desktop-attention`}
-                  >
-                    Ver detalle y señales →
-                  </Link>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <div className="mt-10 grid grid-cols-12 gap-6">
-          <section
-            aria-labelledby="desktop-alerts-title"
-            className="col-span-7 scroll-mt-36 rounded-3xl border border-white/10 bg-[#091624] p-6"
-            id="desktop-alerts"
-          >
-            <div className="flex items-end justify-between gap-6">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.17em] text-rose-300">Alertas activas</p>
-                <h2 className="mt-1 text-2xl font-semibold text-white" id="desktop-alerts-title">
-                  Requieren seguimiento humano
-                </h2>
+          <dl className="mt-6 grid grid-cols-6 divide-x divide-slate-200 rounded-lg border border-slate-200 bg-white py-5">
+            {summary.map((item) => (
+              <div className="px-5" key={item.label}>
+                <dt className="flex items-center gap-2 text-xs text-slate-600"><span aria-hidden="true" className={`size-1.5 rounded-full ${item.color}`} />{item.label}</dt>
+                <dd className="mt-2 font-mono text-3xl tabular-nums tracking-tight text-slate-900">{item.value === null ? "—" : item.value.toString().padStart(2, "0")}</dd>
               </div>
-              <span className="rounded-full bg-rose-300/10 px-3 py-1 text-base font-bold text-rose-100">
-                {activeAlerts.length} activas
-              </span>
+            ))}
+          </dl>
+        </section>
+
+        {!machines.length ? <section className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-slate-900">No hay equipos habilitados para tu acceso</h2>
+          <p className="mt-2 text-sm text-slate-600">Consultá tus ámbitos y vigencias o contactá a quien administra los accesos.</p>
+          <Link className="mt-3 inline-flex min-h-11 items-center font-medium text-teal-700 hover:text-teal-800" href="/profile">Ver mis accesos →</Link>
+        </section> : null}
+
+        {machines.length ? <section aria-labelledby="desktop-attention-title" className="mt-8 scroll-mt-32" id="desktop-attention">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900" id="desktop-attention-title">Equipos prioritarios</h2>
+            <p className="text-xs text-slate-600">Orden ilustrativo según índice demo</p>
+          </div>
+          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-5">
+            {topMachine ? (
+              <article className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                <div className="flex items-center justify-between border-b border-slate-200 px-6 py-3">
+                  <span className="flex items-center gap-3 text-xs text-slate-700"><span className="font-mono text-rose-700">01</span> Primera revisión</span>
+                  <StatusBadge label={topMachine.statusLabel} status={topMachine.status} />
+                </div>
+                <div className="px-6 pt-5">
+                  <div className="flex items-center justify-between gap-5">
+                    <div>
+                      <p className="font-mono text-sm text-slate-600">{topMachine.id} <span className="text-slate-600">/</span> {topMachine.model}</p>
+                      <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{topMachine.name}</h3>
+                      <p className="mt-2 text-xs text-slate-600">{topMachine.sector} · Criticidad {topMachine.criticality.toLowerCase()}</p>
+                    </div>
+                    <MachineImage className="h-24 w-40 shrink-0" image={topMachine.image} label={`${topMachine.type} ${topMachine.id}`} visual={topMachine.visual} />
+                  </div>
+                  <p className="mt-5 border-l-2 border-rose-600/60 pl-3 text-sm leading-6 text-slate-700">{topMachine.signal}</p>
+                  <div className="mt-5 grid grid-cols-3 gap-3">{topMachine.sensors.slice(0, 3).map((sensor) => <SensorTrend key={sensor.key} trend={sensor} />)}</div>
+                  <p className="mt-3 text-[11px] text-slate-600">Lecturas simuladas · Escala relativa por sensor · Huecos preservados</p>
+                  <p className="my-5 text-sm leading-6 text-slate-700"><span className="font-medium text-slate-900">Revisión sugerida: </span>{topMachine.recommendation}</p>
+                </div>
+                <div className="flex items-center justify-between gap-5 border-t border-slate-200 bg-slate-50 px-6 py-4">
+                  <div className="flex items-baseline gap-2"><data className="font-mono text-2xl tabular-nums text-slate-900" value={topMachine.riskScore}>{topMachine.riskScore}</data><span className="text-xs text-slate-600">/100 · Índice demo</span></div>
+                  <Link className="inline-flex min-h-11 items-center justify-center gap-5 rounded-md bg-teal-700 px-4 text-sm font-semibold text-white hover:bg-teal-800" href={`/machines/${topMachine.id}?from=desktop-attention`}>Revisar equipo <span aria-hidden="true">↗</span></Link>
+                </div>
+              </article>
+            ) : null}
+            <div className="flex flex-col rounded-lg border border-slate-200 bg-white">
+              <h3 className="border-b border-slate-200 px-5 py-4 text-sm font-medium text-slate-700">Siguientes en la revisión</h3>
+              <ol className="divide-y divide-slate-200" start={2}>
+                {nextMachines.map((machine, index) => (
+                  <li key={machine.id}>
+                    <Link className="group block px-5 py-5 hover:bg-slate-50" href={`/machines/${machine.id}?from=desktop-attention`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-mono text-xs text-slate-600">{(index + 2).toString().padStart(2, "0")} <span className="mx-2 text-slate-600">/</span> {machine.id}</span>
+                        <StatusBadge label={machine.statusLabel} status={machine.status} />
+                      </div>
+                      <div className="mt-4 flex items-center gap-3">
+                        <MachineImage className="h-14 w-20 shrink-0" image={machine.image} label={`${machine.type} ${machine.id}`} visual={machine.visual} />
+                        <div className="min-w-0"><h4 className="text-base font-semibold text-slate-900 group-hover:text-teal-800">{machine.name}</h4><p className="mt-1 text-xs text-slate-600">{machine.model}</p></div>
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-slate-600">{machine.signal}</p>
+                      <div className="mt-4 flex items-center justify-between text-xs">
+                        <span className="text-slate-600">Índice demo <data className="ml-2 font-mono text-base text-slate-900" value={machine.riskScore}>{machine.riskScore}</data><span className="ml-1">/100</span></span>
+                        <span className="font-medium text-teal-700">Ver detalle <span aria-hidden="true">↗</span></span>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-auto border-t border-slate-200 px-5 py-4 text-xs leading-5 text-slate-600">Las señales requieren validación humana antes de cualquier intervención.</p>
             </div>
+          </div>
+        </section> : null}
 
-            <ol className="mt-5 divide-y divide-white/[0.07]">
-              {activeAlerts.map((alert, index) => {
-                const machine = machineById.get(alert.machineId);
+        <section aria-labelledby="desktop-machines-title" className="mt-8 scroll-mt-32" id="desktop-machines">
+          <div className="mb-4 flex items-center justify-between gap-6">
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900" id="desktop-machines-title">Inventario de equipos <span className="ml-2 font-mono text-sm font-normal text-slate-600">{machines.length.toString().padStart(2, "0")}</span></h2>
+            <p className="text-xs text-slate-600">Índice demo 0–100 · No es una probabilidad de falla</p>
+          </div>
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <table className="w-full text-left text-sm">
+              <caption className="sr-only">Equipos del corte simulado, estado, criticidad, índice de atención y última actualización.</caption>
+              <thead className="border-b border-slate-200 bg-slate-50 text-xs text-slate-600">
+                <tr>{["Equipo", "Sector", "Estado", "Criticidad", "Índice demo", "Actualización"].map((heading) => <th className="px-5 py-3 font-medium" key={heading} scope="col">{heading}</th>)}</tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {machines.map((machine) => (
+                  <tr className="scroll-mt-32 hover:bg-slate-50 focus-within:bg-slate-50" id={`desktop-machine-${machine.id}`} key={machine.id}>
+                    <th className="px-5 py-3 font-normal" scope="row">
+                      <Link className="group flex min-h-11 items-center gap-3 rounded-sm" href={`/machines/${machine.id}?from=desktop-machines`}>
+                        <MachineImage className="h-11 w-16 shrink-0" image={machine.image} label={`${machine.type} ${machine.id}`} visual={machine.visual} />
+                        <span><span className="block font-mono text-[11px] text-slate-600">{machine.id}</span><span className="mt-0.5 block font-medium text-slate-900 group-hover:text-teal-800">{machine.name} <span aria-hidden="true" className="ml-1 text-slate-500 group-hover:text-teal-800">↗</span></span></span>
+                      </Link>
+                    </th>
+                    <td className="max-w-56 px-5 py-3 text-xs leading-5 text-slate-600">{machine.sector}</td>
+                    <td className="px-5 py-3"><StatusBadge label={machine.statusLabel} status={machine.status} /></td>
+                    <td className="px-5 py-3 text-xs text-slate-700">{machine.criticality}</td>
+                    <td className="px-5 py-3"><div className="flex items-center gap-3"><data className="w-6 text-right font-mono text-sm tabular-nums text-slate-900" value={machine.riskScore}>{machine.riskScore}</data><span aria-hidden="true" className="h-1 w-16 overflow-hidden bg-slate-200"><span className={`block h-full ${riskBarStyles[machine.status]}`} style={{ width: `${machine.riskScore}%` }} /></span></div></td>
+                    <td className="px-5 py-3"><time className="font-mono text-xs tabular-nums text-slate-600" dateTime={machine.updatedAt}>{timeFormatter.format(new Date(machine.updatedAt))}</time></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div className="mt-8 grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-5">
+          <section aria-labelledby="desktop-alerts-title" className="scroll-mt-32 rounded-lg border border-slate-200 bg-white" id="desktop-alerts">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><h2 className="text-base font-semibold text-slate-900" id="desktop-alerts-title">Alertas activas</h2><span className="font-mono text-xs text-slate-600">{activeAlerts.length.toString().padStart(2, "0")}</span></div>
+            <ol className="divide-y divide-slate-200">
+              {activeAlerts.map((alert) => {
                 const severity = alertPresentation[alert.severity];
-
                 return (
                   <li key={alert.id}>
-                    <Link
-                      className="-mx-3 grid grid-cols-[7.5rem_minmax(0,1fr)_5rem] items-center gap-5 rounded-xl px-3 py-4 transition-colors hover:bg-white/[0.045] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300"
-                      href={`/machines/${alert.machineId}?from=desktop-alerts`}
-                    >
-                      <span className={`rounded-xl border px-3 py-2 text-center text-sm font-bold ${severity.className}`}>
-                        #{index + 1} · {severity.label}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                          <h3 className="text-lg font-bold text-white">{alert.title}</h3>
-                          <span className="text-sm font-semibold text-slate-400">{alertStatusLabels[alert.status]}</span>
-                        </div>
-                        <p className="mt-1 text-base text-slate-200">
-                          <span className="font-mono font-bold text-teal-300">{alert.machineId}</span>
-                          {machine ? ` · ${machine.name}` : ""} · {alert.description}
-                        </p>
+                    <Link className="grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-start gap-3 px-5 py-4 hover:bg-slate-50" href={`/machines/${alert.machineId}?from=desktop-alerts`}>
+                      <span className="pt-0.5 font-mono text-xs text-slate-700">{alert.machineId}</span>
+                      <div>
+                        <h3 className="text-sm font-medium text-slate-900">{alert.title}</h3>
+                        <p className="mt-1 text-xs leading-5 text-slate-600">{alert.description}</p>
+                        <p className="mt-2 text-xs"><span className={severity.className}>{severity.label}</span><span className="mx-2 text-slate-600">/</span><span className="text-slate-600">{alertStatusLabels[alert.status]}</span></p>
                       </div>
-                      <time className="text-right text-base font-bold tabular-nums text-slate-300" dateTime={alert.timestamp}>
-                        hace {formatAge(alert.timestamp)}
-                      </time>
+                      <time className="pt-0.5 font-mono text-xs tabular-nums text-slate-600" dateTime={alert.timestamp}>{timeFormatter.format(new Date(alert.timestamp))}</time>
                     </Link>
                   </li>
                 );
               })}
             </ol>
+            {!activeAlerts.length ? <p className="px-5 py-4 text-sm text-slate-600">{canViewAlerts ? "No hay alertas activas en los equipos habilitados." : "No tenés acceso a alertas en estos equipos."}</p> : null}
           </section>
-
-          <section aria-labelledby="desktop-activity-title" className="col-span-5 rounded-3xl border border-white/10 bg-[#091624] p-6">
-            <p className="text-sm font-bold uppercase tracking-[0.17em] text-sky-300">Actividad reciente</p>
-            <h2 className="mt-1 text-2xl font-semibold text-white" id="desktop-activity-title">
-              Últimos cambios registrados
-            </h2>
-
-            <ol className="mt-5 space-y-4">
-              {activityEvents.slice(0, 5).map((event) => {
-                const machine = machineById.get(event.machineId);
-                const presentation = activityPresentation[event.type];
-
-                return (
-                  <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3" key={event.id}>
-                    <span aria-hidden="true" className={`mt-2 size-2.5 rounded-full ${presentation.className}`} />
-                    <div>
-                      <p className="text-base font-bold text-white">{event.title}</p>
-                      <p className="mt-0.5 text-sm leading-5 text-slate-400">
-                        {presentation.label} · {machine?.name ?? event.machineId} · {event.detail}
-                      </p>
-                    </div>
-                    <time className="text-sm font-semibold tabular-nums text-slate-400" dateTime={event.timestamp}>
-                      {timeFormatter.format(new Date(event.timestamp))}
-                    </time>
-                  </li>
-                );
-              })}
+          <section aria-labelledby="desktop-activity-title" className="rounded-lg border border-slate-200 bg-white">
+            <h2 className="border-b border-slate-200 px-5 py-4 text-base font-semibold text-slate-900" id="desktop-activity-title">Actividad reciente</h2>
+            <ol className="divide-y divide-slate-200 px-5">
+              {activityEvents.slice(0, 5).map((event) => (
+                <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3 py-4" key={event.id}>
+                  <span aria-hidden="true" className={`mt-1.5 size-1.5 rounded-full ${activityStyles[event.type]}`} />
+                  <div><p className="text-sm font-medium text-slate-700">{event.title}</p><p className="mt-1 text-xs leading-5 text-slate-600"><span className="font-mono">{event.machineId}</span> · {event.detail}</p></div>
+                  <time className="pt-0.5 font-mono text-xs tabular-nums text-slate-600" dateTime={event.timestamp}>{timeFormatter.format(new Date(event.timestamp))}</time>
+                </li>
+              ))}
             </ol>
+            {!activityEvents.length ? <p className="px-5 py-4 text-sm text-slate-600">{canViewActivity ? "No hay actividad en los equipos habilitados." : "No tenés acceso a la actividad de estos equipos."}</p> : null}
           </section>
         </div>
-
-        {topMachine ? (
-          <section aria-labelledby="desktop-trends-title" className="mt-6 rounded-3xl border border-white/10 bg-[#091624] p-6">
-            <div className="grid grid-cols-[minmax(15rem,0.7fr)_minmax(0,2.3fr)] items-center gap-6">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.17em] text-teal-300">Señales prioritarias</p>
-                <h2 className="mt-1 text-2xl font-semibold text-white" id="desktop-trends-title">
-                  {topMachine.id} · {topMachine.name}
-                </h2>
-                <p className="mt-3 text-base leading-6 text-slate-300">{topMachine.signal}</p>
-                <p className="mt-3 text-sm leading-5 text-slate-400">
-                  Lecturas recientes simuladas. Escala visual normalizada y huecos preservados.
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                {topMachine.sensors.slice(0, 3).map((sensor) => (
-                  <SensorTrend key={sensor.key} trend={sensor} />
-                ))}
-              </div>
-            </div>
-          </section>
-        ) : null}
-
-        <section aria-labelledby="desktop-machines-title" className="mt-10 scroll-mt-36" id="desktop-machines">
-          <div className="mb-5 flex items-end justify-between gap-6">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.17em] text-teal-300">Mapa visual</p>
-              <h2 className="mt-1 text-3xl font-semibold text-white" id="desktop-machines-title">
-                Estado de los equipos
-              </h2>
-            </div>
-            <p className="text-base text-slate-400">Puntaje 0–100 ilustrativo · no es una probabilidad real</p>
-          </div>
-
-          <ul className="grid grid-cols-2 gap-4 xl:grid-cols-3 2xl:grid-cols-4">
-            {machines.map((machine) => (
-              <li
-                className="overflow-hidden rounded-2xl border border-white/10 bg-[#0a1828] transition-colors hover:border-teal-300/30 focus-within:border-teal-300/50"
-                id={`desktop-machine-${machine.id}`}
-                key={machine.id}
-              >
-                <article className="h-full">
-                  <Link
-                    className="group grid h-full grid-cols-[8.5rem_minmax(0,1fr)] transition-colors hover:bg-white/[0.035] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-teal-300"
-                    href={`/machines/${machine.id}?from=desktop-machines`}
-                  >
-                    <MachineVisual className="h-full min-h-56 w-full rounded-none" label={`${machine.type} ${machine.id}`} visual={machine.visual} />
-                    <div className="flex min-w-0 flex-col p-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-mono text-sm font-bold text-teal-300">{machine.id}</p>
-                          <h3 className="mt-1 break-words text-lg font-bold leading-snug text-white">{machine.name}</h3>
-                          <p className="mt-1 break-words text-sm leading-snug text-slate-400">{machine.type}</p>
-                        </div>
-                        <span className="shrink-0 rounded-full border border-white/10 px-2.5 py-1 text-sm font-bold text-slate-300">
-                          {machine.criticality}
-                        </span>
-                      </div>
-
-                      <div className="mt-4">
-                        <StatusBadge label={machine.statusLabel} status={machine.status} />
-                      </div>
-
-                      <div className="mt-auto pt-5">
-                        <div className="flex items-end justify-between gap-4">
-                          <span className="text-sm font-semibold text-slate-400">Índice demo</span>
-                          <data className="text-2xl font-bold tabular-nums text-white" value={machine.riskScore}>
-                            {machine.riskScore}
-                            <span className="text-sm text-slate-400">/100</span>
-                          </data>
-                        </div>
-                        <div
-                          aria-label={`Índice de atención simulado ${machine.riskScore} de 100`}
-                          className="mt-2 h-2 overflow-hidden rounded-full bg-white/[0.07]"
-                          role="img"
-                        >
-                          <span className={`block h-full rounded-full ${riskBarStyles[machine.status]}`} style={{ width: `${machine.riskScore}%` }} />
-                        </div>
-                        <time className="mt-3 block text-sm text-slate-400" dateTime={machine.updatedAt}>
-                          Actualizada {timeFormatter.format(new Date(machine.updatedAt))}
-                        </time>
-                      </div>
-                    </div>
-                  </Link>
-                </article>
-              </li>
-            ))}
-          </ul>
-        </section>
       </main>
-
-      <footer className="mx-auto mt-4 flex max-w-[1800px] items-center justify-between border-t border-white/10 px-8 py-7 text-sm text-slate-400 2xl:px-12">
-        <span>PredictiveMaintenance · MVP visual con datos simulados</span>
-        <span>Soporte a la decisión · ninguna acción automática</span>
-      </footer>
+      <footer className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-8 py-6 text-xs text-slate-500 2xl:px-12"><span>PredictiveMaintenance / Centro de operaciones</span><span>Datos simulados · Decisiones a cargo del equipo de mantenimiento</span></footer>
     </div>
   );
 }

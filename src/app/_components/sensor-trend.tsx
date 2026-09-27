@@ -1,50 +1,50 @@
 import type { SensorTrend as SensorTrendData } from "@/features/maintenance/types";
-import { scaleTrendPoints } from "./trend-scale";
+import { scaleTrendPoints, trendPath } from "./trend-scale";
 
 const toneStyles: Record<SensorTrendData["tone"], string> = {
-  critical: "bg-rose-300 shadow-[0_0_12px_rgba(253,164,175,0.16)]",
-  warning: "bg-amber-200 shadow-[0_0_12px_rgba(253,230,138,0.14)]",
-  neutral: "bg-teal-300 shadow-[0_0_12px_rgba(94,234,212,0.14)]",
+  critical: "text-rose-700",
+  warning: "text-amber-800",
+  neutral: "text-slate-700",
 };
 
 const number = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 
 export function SensorTrend({ trend }: { trend: SensorTrendData }) {
   const change = `${trend.change > 0 ? "+" : ""}${number.format(trend.change)}%`;
-  const description = `${trend.label}: ${number.format(trend.value)} ${trend.unit}. Cambio de ${change}. Evolución normalizada de lecturas recientes simuladas.`;
+  const description = `${trend.label}: ${number.format(trend.value)} ${trend.unit}. Cambio de ${change} desde la primera lectura disponible. Evolución normalizada de lecturas simuladas: ${trend.points.map((point) => point === null ? "sin dato" : number.format(point)).join(", ")}.`;
   const scaledPoints = scaleTrendPoints(trend.points);
 
   return (
-    <figure className="rounded-2xl border border-white/[0.08] bg-[#0b1828] p-4 sm:p-5">
+    <figure className="min-w-0 rounded-md border border-slate-200 bg-slate-50 p-4">
       <figcaption className="flex items-start justify-between gap-3">
         <span>
-          <span className="block text-xs font-medium text-slate-400">{trend.label}</span>
-          <span className="mt-1 flex items-baseline gap-1 text-2xl font-semibold tracking-tight text-white">
+          <span className="block text-xs font-medium text-slate-600">{trend.label}</span>
+          <span className="mt-2 flex items-baseline gap-1 font-mono text-2xl tabular-nums tracking-tight text-slate-900">
             {number.format(trend.value)}
-            <span className="text-xs font-medium text-slate-400">{trend.unit}</span>
+            <span className="text-xs font-medium text-slate-600">{trend.unit}</span>
           </span>
         </span>
-        <span className="rounded-lg bg-white/[0.045] px-2 py-1 text-xs font-medium text-slate-300">{change}</span>
+        <span className="pt-0.5 font-mono text-[11px] tabular-nums text-slate-600" title="Cambio desde la primera lectura disponible">{change}</span>
       </figcaption>
 
-      <div aria-label={description} className="sensor-grid mt-5 flex h-24 items-end gap-1.5 rounded-xl px-2 pt-2" role="img">
-        {scaledPoints.map((point, position) => (
-          <span
-            aria-hidden="true"
-            className={`min-h-1 flex-1 rounded-t-sm opacity-45 transition-opacity last:opacity-100 ${
-              point === null ? "border-t border-dashed border-slate-500 bg-transparent" : toneStyles[trend.tone]
-            }`}
-            key={`${trend.key}-${position + 1}`}
-            style={{ height: `${point ?? 8}%` }}
-            title={point === null ? "Sin dato" : `${number.format(trend.points[position] ?? 0)} ${trend.unit}`}
-          />
-        ))}
-      </div>
+      <svg aria-label={description} className={`mt-3 h-24 w-full overflow-visible ${toneStyles[trend.tone]}`} role="img" viewBox="0 0 200 90">
+        <path d="M0 10H200M0 45H200M0 80H200" fill="none" stroke="#94a3b8" strokeOpacity=".35" strokeDasharray="2 4" />
+        <path d={trendPath(scaledPoints)} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+        {scaledPoints.map((point, position) => {
+          const x = 5 + (position / Math.max(1, scaledPoints.length - 1)) * 190;
+          return point === null ? (
+            <path d={`M${x} 10V80`} key={x} stroke="#64748b" strokeDasharray="2 4"><title>Sin dato</title></path>
+          ) : (
+            <circle cx={x} cy={10 + (100 - point) * 0.7} fill="#f8fafc" key={x} r="2.5" stroke="currentColor" strokeWidth="1.5">
+              <title>{`${number.format(trend.points[position] ?? 0)} ${trend.unit}`}</title>
+            </circle>
+          );
+        })}
+      </svg>
 
-      <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-400">
-        <span>Inicio</span>
-        {trend.points.includes(null) ? <span>— Sin dato</span> : null}
-        <span>Última</span>
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-600">
+        <span>{trend.points.length} lecturas · Escala relativa</span>
+        {trend.points.includes(null) ? <span>┊ Sin dato</span> : null}
       </div>
     </figure>
   );

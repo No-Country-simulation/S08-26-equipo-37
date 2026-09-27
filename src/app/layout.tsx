@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Command center industrial y experiencia móvil de alertas con datos simulados.",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Predictive",
   },
   formatDetection: {
@@ -18,9 +18,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  colorScheme: "dark",
+  colorScheme: "light",
   initialScale: 1,
-  themeColor: "#08111d",
+  themeColor: "#ffffff",
   viewportFit: "cover",
   width: "device-width",
 };
