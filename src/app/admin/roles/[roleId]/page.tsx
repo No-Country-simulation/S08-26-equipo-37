@@ -1,0 +1,19 @@
+import { notFound } from "next/navigation";
+import { AdminForm } from "@/app/_components/admin-form";
+import { getRoleDetail } from "@/modules/admin/service";
+import { BackLink, Field, PageTitle, PermissionFields, permissionLabels } from "../../_components";
+import { deleteRoleAction, saveRoleAction } from "../../actions";
+
+export default async function RoleDetailPage({ params }: { params: Promise<{ roleId: string }> }) {
+  const { roleId } = await params;
+  const detail = await getRoleDetail(roleId);
+  if (!detail) notFound();
+  const { role, permissions, grantablePermissions, canUpdate, canSetPermissions, canDelete } = detail;
+  const selected = role.permissions.map(({ permission }) => permission.key);
+  return <>
+    <BackLink href="/admin/roles">Roles y permisos</BackLink><PageTitle title={role.name} description={`${role.isSystem ? "Rol del sistema" : "Rol personalizado"} · ${role._count.assignments} asignaciones. Los cambios de permisos se aplican a todas las personas que usan este rol.`} />
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,1fr)]"><div className="min-w-0 space-y-6"><section className="admin-panel"><h2 className="mb-4 text-lg font-semibold">Datos del rol</h2>{canUpdate ? <AdminForm action={saveRoleAction} confirmLabel="Confirmo la actualización de los datos de este rol." submitLabel="Guardar datos"><input name="roleId" type="hidden" value={role.id} /><input name="mode" type="hidden" value="details" /><Field label="Nombre"><input className="admin-input" defaultValue={role.name} maxLength={64} minLength={3} name="name" required /></Field><Field label="Descripción (opcional)"><textarea className="admin-input" defaultValue={role.description ?? ""} maxLength={300} name="description" rows={3} /></Field></AdminForm> : <p className="text-sm leading-6 text-slate-600">{role.description ?? "Sin descripción."}</p>}</section>
+      <section className="admin-panel"><h2 className="mb-4 text-lg font-semibold">Permisos del rol</h2>{canSetPermissions ? <AdminForm action={saveRoleAction} confirmLabel="Confirmo los cambios de permisos para todas las asignaciones de este rol." submitLabel="Guardar permisos"><input name="roleId" type="hidden" value={role.id} /><input name="mode" type="hidden" value="permissions" /><input name="name" type="hidden" value={role.name} /><input name="description" type="hidden" value={role.description ?? ""} /><PermissionFields permissions={grantablePermissions} selected={selected} /></AdminForm> : <ul className="divide-y divide-slate-100">{permissions.filter((permission) => selected.includes(permission)).map((permission) => <li className="py-3 text-sm" key={permission}>{permissionLabels[permission]}<span className="mt-1 block font-mono text-[11px] text-slate-500">{permission}</span></li>)}{!selected.length ? <li className="py-3 text-sm text-slate-600">Este rol no concede permisos.</li> : null}</ul>}</section></div>
+      <aside className="admin-panel"><h2 className="mb-3 text-lg font-semibold">Protección del acceso</h2><p className="text-sm leading-6 text-slate-600">Debe quedar al menos una cuenta activa con todos los permisos globales y sin vencimiento. No podés modificar roles con permisos superiores a los tuyos.</p>{role.isSystem ? <p className="mt-4 text-sm text-slate-600">Los roles del sistema no se pueden eliminar.</p> : canDelete ? <div className="mt-5 border-t border-slate-200 pt-5"><h3 className="mb-2 text-sm font-semibold text-rose-700">Eliminar rol</h3>{role._count.assignments ? <p className="text-sm leading-6 text-slate-600">Primero revocá o reasigná los {role._count.assignments} accesos que usan este rol.</p> : <AdminForm action={deleteRoleAction} confirmLabel={`Confirmo la eliminación definitiva del rol ${role.name}.`} submitLabel="Eliminar rol"><input name="roleId" type="hidden" value={role.id} /></AdminForm>}</div> : null}</aside></div>
+  </>;
+}

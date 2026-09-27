@@ -7,4 +7,170 @@ datasource db {
   provider = "postgresql"
 }
 
-// Business models are intentionally deferred until the real dataset and domain decisions are known.
+// Identity and visual configuration are independent of the future technical machine model.
+enum UserStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
+enum ScopeType {
+  GLOBAL
+  ORGANIZATION
+  PLANT
+  AREA
+  MACHINE
+}
+
+model User {
+  id                    String   @id @default(cuid())
+  name                  String
+  email                 String   @unique
+  avatarUrl             String?
+  status                UserStatus @default(INVITED)
+  passwordHash          String?
+  lastLoginAt           DateTime?
+  passwordChangedAt     DateTime?
+  mustChangePassword    Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  disabledAt            DateTime?
+  sessions              Session[]
+  assignments           UserRoleAssignment[]
+  resetTokens           PasswordResetToken[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  permissions RolePermission[]
+  assignments UserRoleAssignment[]
+}
+
+model Permission {
+  id    String @id @default(cuid())
+  key   String @unique
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  @@id([roleId, permissionId])
+}
+
+model UserRoleAssignment {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  roleId     String
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  scopeType  ScopeType
+  scopeRef   String?
+  validFrom  DateTime?
+  validUntil DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([userId, scopeType, scopeRef])
+  @@index([validUntil])
+}
+
+// Authorization references only. No sensor, telemetry, prediction, or maintenance data.
+model AccessResource {
+  id        String @id @default(cuid())
+  scopeType ScopeType
+  scopeRef  String
+  name      String
+  parentId  String?
+  parent    AccessResource? @relation("AccessHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children  AccessResource[] @relation("AccessHierarchy")
+  @@unique([scopeType, scopeRef])
+}
+
+model Invitation {
+  id              String   @id @default(cuid())
+  email           String
+  tokenHash       String   @unique
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  createdByUserId String
+  createdAt       DateTime @default(now())
+  @@index([email])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId])
+}
+
+model AuthRateLimit {
+  key       String   @id
+  attempts  Int      @default(1)
+  resetAt   DateTime
+}
+
+model MachinePresentation {
+  id                  String   @id @default(cuid())
+  machineRef          String   @unique
+  displayNameOverride String?
+  shortDescription    String?
+  updatedByUserId     String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  images              MachineImage[]
+}
+
+model MachineImage {
+  id                    String   @id @default(cuid())
+  machinePresentationId String
+  presentation          MachinePresentation @relation(fields: [machinePresentationId], references: [id], onDelete: Cascade)
+  url                   String
+  alt                   String
+  isPrimary             Boolean  @default(false)
+  sortOrder             Int      @default(0)
+  mimeType              String?
+  sizeBytes             Int?
+  createdByUserId        String
+  createdAt             DateTime @default(now())
+  @@index([machinePresentationId, sortOrder])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  entityType  String
+  entityId    String?
+  beforeData  Json?
+  afterData   Json?
+  scopeType   ScopeType @default(GLOBAL)
+  scopeRef    String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  @@index([createdAt])
+  @@index([scopeType, scopeRef, createdAt])
+}
