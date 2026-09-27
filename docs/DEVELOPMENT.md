@@ -22,7 +22,33 @@ Copy `.env.example` to `.env` with `cp .env.example .env` on macOS/Linux or `Cop
 npm run dev:full
 ```
 
-This validates Node.js, `.env`, `DATABASE_URL`, Docker, Compose, and the Docker daemon before starting PostgreSQL and Next.js. It reports all missing prerequisites together. The home page and health endpoint remain database-independent, so `npm run dev` is still available for work that does not need PostgreSQL.
+This validates Node.js, `.env`, `DATABASE_URL`, Docker, Compose, and the Docker daemon before starting PostgreSQL and Next.js. It reports all missing prerequisites together. `/api/health` remains database-independent; the authenticated dashboard and administration require PostgreSQL, migrations, and bootstrap data. `npm run dev` starts Next.js alone when an existing database is already available.
+
+### Preparación de identidad y administración
+
+Antes del primer ingreso, preparar la base con `npm run db:up` y `npm run db:migrate`. Configurar `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME` y `BOOTSTRAP_ADMIN_PASSWORD` en el `.env` ignorado o en el entorno del proceso, y ejecutar `npm run db:seed`. El script carga `.env`; no asumir que carga automáticamente `.env.local`. La cuenta inicial exige cambiar la contraseña en el primer login. Retirar después las variables `BOOTSTRAP_ADMIN_*` y no guardar la contraseña en comandos ni en el repositorio. Repetir el seed debe conservar el catálogo y las credenciales existentes. La verificación de este flujo se registra en [AUTH-ADMIN.md](./AUTH-ADMIN.md).
+
+El seed registra los equipos del mock como referencias `MACHINE` independientes. No crea una organización, planta o área supuesta. La jerarquía real se carga explícitamente desde administración con `settings.update` global; hasta entonces, probar acceso global o por equipo.
+
+`APP_URL` determina el origen de enlaces de invitación/reset y la configuración segura de la cookie. Usar HTTPS fuera de desarrollo local. SMTP y S3/R2 son opcionales y se configuran con las variables documentadas en `.env.example` y [AUTH-ADMIN.md](./AUTH-ADMIN.md). Probar correo primero con un transporte local; no asumir entrega externa por haber emitido un token. La galería admite URLs externas validadas aunque la carga de archivos no esté configurada.
+
+En este entorno, SMTP ya está configurado en `.env.local`, ignorado por Git, con una contraseña de aplicación independiente autorizada para `no-reply@chenodo.ar`; la conexión TLS y la autenticación se verificaron. Next.js carga ese archivo, pero esto no configura otros entornos ni acredita entrega de mensajes. Las pruebas de invitación/reset e integración siguen registradas por separado. El almacenamiento S3/R2 puede permanecer deshabilitado y no requiere crear infraestructura externa para esta entrega.
+
+### Pruebas de integración locales
+
+`npm test` ejecuta las pruebas unitarias sin requerir una base de datos. La integración de identidad y administración se ejecuta por separado:
+
+```bash
+npm run test:integration
+```
+
+Antes de ejecutarla, crear la base dedicada `predictive_maintenance_e2e` en PostgreSQL local, aplicar las migraciones existentes y ejecutar `npm run db:seed` apuntando a esa base. Para este seed usar solamente el catálogo, sin variables `BOOTSTRAP_ADMIN_*`: el runner prepara su propio administrador sintético cuando la base no contiene usuarios.
+
+El runner [`scripts/check-identity-integration.ts`](../scripts/check-identity-integration.ts) carga `.env`, exige que `DATABASE_URL` tenga host `127.0.0.1` y reemplaza el nombre de base por `predictive_maintenance_e2e`, terminado en `_e2e`. No crea ni migra la base. Las credenciales y el puerto de conexión proceden del entorno; nunca se imprimen. El comando incluye `--conditions=react-server --import tsx`, y el archivo no se descubre como parte de `npm test`.
+
+Las nueve comprobaciones crean fixtures únicos y verifican invitación/reset de un solo uso, revocación de sesiones, suspensión, límites de permisos/ámbito/vigencia, protección del último administrador global y auditoría sin secretos. El runner borra las variables `SMTP_*` del proceso antes de importar servicios: no envía correo real.
+
+Los fixtures quedan en la base dedicada y sus datos de acceso sintéticos se guardan en `.cache/e2e-fixtures.json`, ignorado por Git. Las ejecuciones siguientes reutilizan su administrador; conservar ese archivo junto a la base y mantener un solo administrador global permanente para comprobar su protección. El viewer de revisión queda limitado a `MACHINE M-01`, y los enlaces de prueba usan `http://127.0.0.1:3001`. No se levantan automáticamente un servidor web ni un transporte SMTP. La evidencia de integración, navegador y entrega externa se registra por separado en [AUTH-ADMIN.md](./AUTH-ADMIN.md#validación-y-pendientes).
 
 ## Dataset (Git LFS)
 
@@ -79,6 +105,7 @@ Do not keep a second copy of the dataset inside `ml/`: notebooks read the canoni
 | `npm run db:up` | Start and wait for the local PostgreSQL service |
 | `npm run db:down` | Stop local Compose services while preserving database data |
 | `npm test` | Run the Node.js test suite |
+| `npm run test:integration` | Check identity/admin cases against the prepared local `predictive_maintenance_e2e` database, without SMTP |
 | `npm run lint` | Run ESLint |
 | `npm run typecheck` | Check TypeScript without emitting files |
 | `npm run check` | Run lint and typecheck |
@@ -87,6 +114,7 @@ Do not keep a second copy of the dataset inside `ml/`: notebooks read the canoni
 | `npm run db:generate` | Generate Prisma Client |
 | `npm run db:validate` | Validate the Prisma schema |
 | `npm run db:migrate` | Create and apply a development migration |
+| `npm run db:seed` | Bootstrap identity permissions, system roles, machine references, and the initial administrator |
 | `npm run db:studio` | Open Prisma Studio |
 
 ## Development flow
@@ -101,7 +129,7 @@ Server Components are the default. Use a Client Component only for browser APIs,
 
 ## Data and Prisma
 
-Do not add a model or migration until the dataset and relevant domain decisions are explicit. When that happens:
+Identity, administration, audit, and presentation persistence are explicitly approved in [ADR 0007](./adr/0007-identity-administration.md). Maintenance-domain tables still require explicit dataset and product decisions. For an approved schema change:
 
 1. Update `prisma/schema.prisma`.
 2. Run `npm run db:validate` and `npm run db:generate`.
@@ -112,9 +140,11 @@ Generated Prisma Client files stay ignored and are recreated by `postinstall`.
 
 The Compose credentials are local-only. If port `5432` is already in use, stop the conflicting service or configure an external PostgreSQL instance and run `npm run dev` without Compose. If the setup check reports an unavailable daemon, start Docker Desktop or the Docker service and retry.
 
+En la máquina Windows usada para esta entrega, el engine de Prisma falló al conectar con `localhost`, mientras la misma base respondió con `127.0.0.1`. Si se reproduce ese caso, cambiar únicamente el host de `DATABASE_URL` a `127.0.0.1` y repetir la comprobación. Es una observación de este entorno, no un requisito general de PostgreSQL ni motivo para cambiar credenciales o abrir acceso público.
+
 ## Dependencies
 
-Pin direct dependencies and review their licenses and advisories before adding them. ESLint 9 is retained because the official Next.js 16 configuration is not yet reliably compatible with ESLint 10. The `deepmerge-ts` and `mysql2` overrides patch advisories in Prisma CLI transitive dependencies; remove them once Prisma carries fixed versions and all Prisma checks still pass.
+Pin direct dependencies and review their licenses and advisories before adding them. ESLint 10 uses `@next/eslint-plugin-next` directly with compatible configs in `eslint.config.mjs`; `eslint-config-next@16.3.4` pulls incompatible plugins (see `AGENTS.md`). The `deepmerge-ts` and `mysql2` overrides patch advisories in Prisma CLI transitive dependencies; remove them once Prisma carries fixed versions and all Prisma checks still pass.
 
 ## Git
 

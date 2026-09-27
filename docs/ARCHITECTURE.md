@@ -2,11 +2,11 @@
 
 ## Current decision
 
-PredictiveMaintenance starts as a server-first modular monolith in one Next.js application. It has one deployable unit and, when data persistence begins, one PostgreSQL database accessed through Prisma.
+PredictiveMaintenance starts as a server-first modular monolith in one Next.js application. It has one deployable unit and one PostgreSQL database accessed through Prisma for identity, administration, audit, and machine presentation.
 
 The Python workspace under `ml/` is not a deployable unit. It is a local workspace for data preparation and modeling, and deploying any part of it is a change to this boundary.
 
-This is a boundary for the MVP, not a complete domain design. No domain module or table exists until real data and product decisions justify it.
+This is a boundary for the MVP, not a complete domain design. Identity and administration are explicitly approved in [ADR 0007](./adr/0007-identity-administration.md); the industrial domain and prediction integration still require their own data and product decisions.
 
 ```mermaid
 flowchart TD
@@ -22,7 +22,7 @@ flowchart TD
 - `src/app`: routes, layouts, HTTP boundaries, and presentation. It coordinates use cases but does not contain business rules or direct Prisma calls.
 - `src/modules`: cohesive vertical domain slices created only when a real use case exists.
 - `src/lib`: shared technical configuration and infrastructure such as environment validation and the Prisma client.
-- `prisma`: the persistence schema and migrations once the domain is known.
+- `prisma`: the persistence schema and migrations for approved use cases.
 - `src/generated`: generated Prisma Client code; never edited or committed.
 - `ml`: the Python workspace for data preparation and modeling. Nothing in `src/` imports it and the deployment does not run it; see the ML workspace section below.
 
@@ -62,15 +62,25 @@ Server Components are the default for data access, composition, and non-interact
 
 The current dashboard uses one typed, static maintenance snapshot while backend contracts are still pending. The root route renders two purpose-built presentations from that same data: a server-rendered command center for large plant monitors and a mobile PWA view for alert-focused remote follow-up. CSS selects the presentation by viewport; no user-agent detection or duplicated business rules are needed.
 
-Both presentations link to the statically generated `/machines/[machineId]` detail route. That Server Component validates the route parameter with Zod and derives its signals, alerts, and activity from the same snapshot, so the investigation flow stays consistent without adding a backend contract.
+Both presentations link to `/machines/[machineId]`. That Server Component validates the route parameter with Zod and derives its signals, alerts, and activity from the same snapshot. Protected reads also resolve the current user's permissions and may overlay persisted presentation, so they require request-time authorization rather than a shared static result.
 
-Only the mobile shell is a Client Component because it owns tab, filter, and notification-read state. PWA support currently covers install metadata, local icons, and the simulated notification center. Service workers, push subscriptions, realtime transport, and persistence stay out of scope until their product and backend requirements are validated.
+The desktop layout groups plant counts in one status strip, gives the first priority equipment its signals, and uses a table for inventory comparison. Mobile keeps compact lists and the same status vocabulary. Both use light neutral surfaces, dark text, and restrained colors for statuses and actions. Sensor charts use relative scales per sensor, break lines at missing readings, and expose values through accessible descriptions; they do not imply timestamps or comparable magnitudes across different sensors.
+
+The mobile shell owns tab, filter, and notification-read state in a Client Component. Interactive administration forms and image fallbacks also use small client boundaries. PWA support currently covers install metadata, local icons, and the simulated notification center. Service workers, push subscriptions, realtime transport, and maintenance-data persistence stay out of scope until their product and backend requirements are validated.
+
+## Identidad y administración
+
+La arquitectura de [ADR 0007](./adr/0007-identity-administration.md) incorpora tres módulos: `identity` para credenciales, sesiones opacas, permisos, referencias y auditoría; `admin` para el backoffice; y `machine-presentation` para personalización y galería. Sus casos de uso acceden a Prisma desde el servidor. Las páginas protegidas requieren sesión y filtran registros por permiso, ámbito y vigencia; las mutaciones vuelven a comprobar la autoridad vigente.
+
+`AccessResource` mantiene un árbol explícito de referencias de autorización separado del modelo industrial. El seed sólo registra los equipos del mock, sin inventar organizaciones, plantas o áreas. Un administrador con `settings.update` global puede cargar la jerarquía real. `MachinePresentation` usa esas referencias para superponer nombre, descripción e imágenes sin cambiar señales, alertas ni predicciones.
+
+El envío SMTP y el almacenamiento S3/R2 son adaptadores opcionales. Sin transporte de correo, una invitación puede entregarse mediante un enlace copiable por un administrador autorizado; sin almacenamiento configurado se conservan las URLs externas de imágenes admitidas. El alcance, la matriz de requisitos y la validación pendiente se mantienen en [AUTH-ADMIN.md](./AUTH-ADMIN.md).
 
 ## Prisma
 
 `src/lib/db/prisma.ts` is server-only and creates a cached client lazily. This prevents hot reload from creating repeated pools while allowing the application to build and start without `DATABASE_URL`. A missing URL fails only when database access is requested.
 
-The schema intentionally has no business models. Dataset structure alone is not automatically the product domain; both data and use cases must be understood before adding tables.
+The schema contains identity, access, audit, and presentation models. It does not persist the industrial maintenance domain or convert dataset columns into product tables. Protected pages now need a configured database and bootstrap data even though lazy client initialization still allows database-independent paths such as `/api/health`.
 
 ## ML workspace (Python)
 
@@ -98,7 +108,7 @@ If dataset import, feature calculation, or scoring later requires scheduled work
 
 - One deployment means modules share release cadence and process resources.
 - PostgreSQL is the only selected datastore; its production topology is undecided.
-- Authentication, authorization, realtime transport and notifications are not designed.
+- Identity and authorization are defined in ADR 0007; their end-to-end verification and external SMTP/storage setup remain tracked in AUTH-ADMIN.md. Realtime transport and operational notifications are not designed.
 - The prediction prototype under `ml/api` is not integrated: the boundary between the application and the model, its deployment and its model versioning are not designed.
 - Large ingestion or compute workloads may eventually require a separate process, but there is no evidence for that split yet.
 

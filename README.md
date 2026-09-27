@@ -2,13 +2,15 @@
 
 Technical foundation for an industrial maintenance support application. The intended MVP will help maintenance teams identify machines showing deterioration signals, understand the variables involved, and decide what to inspect first.
 
-The predictive promise is not defined yet: it must be justified by the real dataset. This repository currently contains the technical bootstrap, not product features or a trained model.
+La promesa predictiva todavía requiere validación con los datos. La aplicación incluye un dashboard con datos simulados, detalle de equipos, autenticación y un backoffice de usuarios, roles, accesos, auditoría y presentación. El workspace `ml/` contiene experimentos y un prototipo de inferencia que todavía no se integra con la aplicación.
 
 ## Current state
 
 - Next.js full-stack application using the App Router
 - Server-first modular monolith
-- PostgreSQL selected through Prisma, with no speculative business models
+- PostgreSQL through Prisma for identity, access, audit, and machine presentation
+- Email/password login, revocable sessions, invitations, password recovery, and permissions by scope and validity
+- Administrative users, roles, access assignments, audit, and machine presentation over the existing mock inventory
 - Local PostgreSQL through Docker Compose with an actionable setup check
 - Database-independent health endpoint at `GET /api/health`
 - Node.js tests and GitHub Actions validation
@@ -22,7 +24,7 @@ The predictive promise is not defined yet: it must be justified by the real data
 | React | `19.2.8` |
 | TypeScript | `5.9.3` (strict) |
 | Tailwind CSS | `4.3.3` |
-| ESLint | `9.39.5` |
+| ESLint | `10.11.0` |
 | Prisma ORM | `7.10.0` |
 | PostgreSQL driver | `pg 8.23.0` |
 | Zod | `4.5.4` |
@@ -59,17 +61,24 @@ cp .env.example .env
 Copy-Item .env.example .env
 ```
 
-Then start PostgreSQL and the application together:
+Para el primer inicio, configurar en el `.env` ignorado las variables `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME` y una contraseña de entre 12 y 128 caracteres en `BOOTSTRAP_ADMIN_PASSWORD`, tomando los nombres de `.env.example`. No usar una contraseña de ejemplo ni incluir credenciales en comandos, commits o documentación. Luego preparar la base y arrancar la aplicación:
 
 ```bash
-npm run dev:full
+npm run db:up
+npm run db:migrate
+npm run db:seed
+npm run dev
 ```
 
-The command reports every missing prerequisite before starting PostgreSQL. Open `http://localhost:3000` and check readiness at `http://localhost:3000/api/health`. For UI or health-endpoint work that does not need PostgreSQL, use `npm run dev` instead.
+El seed crea el administrador inicial sólo si su email no existe y exige cambiar la contraseña en el primer ingreso. Después del bootstrap, retirar las variables `BOOTSTRAP_ADMIN_*` de la configuración local. Las ejecuciones siguientes conservan cuentas y permisos existentes; `npm run dev:full` permite iniciar PostgreSQL y Next.js juntos cuando la base ya está preparada.
+
+Abrir `http://127.0.0.1:3000`, coincidente con `APP_URL`, y comprobar `http://127.0.0.1:3000/api/health`. El dashboard y el backoffice requieren base de datos; el health endpoint sigue siendo independiente. `npm run dev` inicia solamente Next.js para usar una base ya disponible. El setup completo y la particularidad de conexión de Prisma en Windows están en [DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Environment variables
 
 `DATABASE_URL` is required for the bundled PostgreSQL workflow. `.env.example` already matches the local Compose service; copy it without placing real credentials in the repository. An external PostgreSQL URL can be used without Docker by starting the app with `npm run dev`.
+
+`APP_URL` establece el origen de los enlaces de acceso y debe usar HTTPS en producción. SMTP se configura mediante variables del servidor; las claves locales pueden guardarse en `.env.local`, ignorado por Git y cargado por Next.js. La carga de imágenes en S3/R2 es opcional: sin proveedor configurado se admiten URLs externas validadas. Ver [AUTH-ADMIN.md](docs/AUTH-ADMIN.md) para configuración, límites y evidencia de validación local.
 
 ## Scripts
 
@@ -81,6 +90,7 @@ The command reports every missing prerequisite before starting PostgreSQL. Open 
 | `npm run db:up` | Start and wait for the local PostgreSQL service |
 | `npm run db:down` | Stop local Compose services while preserving database data |
 | `npm test` | Run tests with Node.js |
+| `npm run test:integration` | Run identity and administration checks against the dedicated local E2E database |
 | `npm run lint` | Run ESLint |
 | `npm run typecheck` | Run strict TypeScript checks |
 | `npm run check` | Run lint and typecheck |
@@ -89,15 +99,18 @@ The command reports every missing prerequisite before starting PostgreSQL. Open 
 | `npm run db:generate` | Generate Prisma Client |
 | `npm run db:validate` | Validate the Prisma schema |
 | `npm run db:migrate` | Create and apply a development migration |
+| `npm run db:seed` | Seed permissions, system roles, machine references, and an optional initial administrator |
 | `npm run db:studio` | Open Prisma Studio |
+
+`npm run test:integration` requiere PostgreSQL en `127.0.0.1` y la base dedicada `predictive_maintenance_e2e` previamente migrada y con el seed de catálogo aplicado. El runner fuerza ese nombre terminado en `_e2e`, conserva fixtures sintéticos en `.cache/` y deshabilita SMTP; no forma parte de `npm test`. Ver [pruebas de integración locales](docs/DEVELOPMENT.md#pruebas-de-integración-locales).
 
 ## Structure
 
 ```text
 src/app/             Next.js routes and presentation
-src/modules/         Domain modules, created only when a real slice exists
+src/modules/         Identity, administration, machine presentation, and maintenance read models
 src/lib/             Environment and server-only infrastructure
-prisma/              Database schema; intentionally contains no business models
+prisma/              Identity, authorization, audit, and presentation schema and migrations
 test/                Small runnable behavior checks
 docs/                Product, data, architecture, delivery, and security decisions
 docs/adr/            Architecture Decision Records
@@ -109,7 +122,7 @@ The UI must not access Prisma directly. Requests flow from Next.js presentation 
 
 Prisma Client is generated during `npm ci`. Generation and schema validation work without a configured database; migrations and runtime queries require `DATABASE_URL`.
 
-No machine, sensor, reading, alert, prediction, maintenance, failure, or component model exists yet. The dataset and domain decisions must come first.
+Identity and presentation models are defined in [ADR 0007](docs/adr/0007-identity-administration.md). `AccessResource` stores authorization references and their explicit hierarchy; the seed registers only mock machines without inventing plants or organizations. No technical machine, sensor, reading, alert, prediction, maintenance, failure, or component model exists yet. Those tables still require dataset and domain decisions.
 
 ## CI and deployment
 
@@ -127,6 +140,7 @@ Deployment target: `https://predictive-maintenance.smacaya.tech`.
 - [`docs/PRODUCT.md`](docs/PRODUCT.md): facts, hypotheses, scope, and product decisions
 - [`docs/DATA-STRATEGY.md`](docs/DATA-STRATEGY.md): dataset requirements and predictive options
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): server-first modular monolith
+- [`docs/AUTH-ADMIN.md`](docs/AUTH-ADMIN.md): identity, administration, setup boundaries, and acceptance checks
 - [`docs/OPEN-QUESTIONS.md`](docs/OPEN-QUESTIONS.md): prioritized unresolved decisions
 - [`docs/ROADMAP.md`](docs/ROADMAP.md): incremental phases without invented dates
 - [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md): local workflow, commands and Git LFS
