@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { scaleTrendPoints } from "../src/app/_components/trend-scale.ts";
+import { scaleTrendPoints, trendPath } from "../src/app/_components/trend-scale.ts";
 import {
   activityEvents,
   alerts,
@@ -69,4 +69,12 @@ test("scaleTrendPoints keeps gaps and gives constant readings a visible baseline
   assert.deepEqual(scaleTrendPoints([10, null, 20]), [18, null, 100]);
   assert.deepEqual(scaleTrendPoints([5, 5]), [55, 55]);
   assert.deepEqual(scaleTrendPoints([null, null]), [null, null]);
+});
+
+test("sensor paths break at missing readings and retain zero and isolated readings", () => {
+  assert.equal(trendPath([0, null, 100]), "M5,80 M195,10");
+  assert.equal(trendPath([0, 50, 100]), "M5,80 L100,45 L195,10");
+  assert.equal(trendPath([null, null]), "");
+  assert.equal(trendPath([]), "");
+  assert.equal(trendPath([55]), "M5,41.5");
 });

@@ -32,10 +32,23 @@ Las preguntas se priorizan por su impacto sobre el producto y los datos. Una pre
 
 ## P2 — decisiones posteriores a la validación
 
-- ¿Qué roles y permisos necesita una primera operación compartida?
+- ¿Cuál es la jerarquía real de organizaciones, plantas, áreas y equipos, y quién mantiene sus referencias? El mecanismo de autorización ya está definido, pero el seed no inventa estas relaciones.
 - ¿Se requieren notificaciones, exportaciones o integraciones externas?
 - ¿Existe una necesidad demostrada de actualización en tiempo real?
 - ¿Cuánto tiempo deben conservarse datos, predicciones y feedback?
-- ¿Se necesita soportar más de una planta, organización o familia de máquinas?
+- ¿Qué plantas, organizaciones y familias de máquinas participarán realmente? La capacidad de asignar ámbitos no define el alcance operativo ni los datos de cada organización.
+
+## Decisión explícita: identidad y administración
+
+El requerimiento del 2026-09-27 resolvió los roles iniciales, permisos, ámbitos y vigencia para una primera operación compartida. Se registran en [ADR 0007](./adr/0007-identity-administration.md) y [AUTH-ADMIN.md](./AUTH-ADMIN.md). Esta decisión no resuelve las preguntas P0 del producto predictivo ni adopta un modelo técnico de máquinas.
+
+La credencial de aplicación independiente para `no-reply@chenodo.ar` ya se configuró en el `.env.local` ignorado y se verificaron TLS y autenticación SMTP. Se autorizó el destinatario para pruebas de invitación y recuperación. No se cambió la credencial del otro producto.
+
+La validación local, la integración y los envíos externos están registrados en [AUTH-ADMIN.md](./AUTH-ADMIN.md#validación-y-pendientes). Gmail recibió la recuperación en Entrada y clasificó la invitación como Spam. Estas comprobaciones no configuran ni acreditan un despliegue de producción.
+
+Para operación posterior siguen abiertas:
+
+- ¿Se habilitará la carga de archivos en almacenamiento S3 compatible o R2? Es opcional: mientras no se configure, la galería admite URLs externas validadas. No bloquea esta entrega ni implica crear infraestructura externa.
+- ¿Qué retención y limpieza se aplicará a auditoría, sesiones, tokens, límites de intentos y objetos de imágenes, y qué backups y recuperación se requieren?
 
 Cuando se resuelva una pregunta, la respuesta debe registrar evidencia, responsable e impacto en el documento correspondiente o en un ADR si la decisión es arquitectónica.
