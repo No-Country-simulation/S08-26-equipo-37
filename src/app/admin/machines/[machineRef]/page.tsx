@@ -22,19 +22,19 @@ export default async function AdminMachinePage({ params }: { params: Promise<unk
   return (
     <div className="space-y-7">
       <header>
-        <Link className="inline-flex min-h-11 items-center text-sm font-medium text-teal-700 hover:text-teal-800" href="/admin/machines">← Volver a máquinas</Link>
+        <Link className="inline-flex min-h-11 items-center text-sm font-medium text-action hover:text-action-hover" href="/admin/machines">← Volver a máquinas</Link>
         <div className="mt-2 flex items-start justify-between gap-5">
           <div>
-            <p className="font-mono text-sm text-slate-500">{machine.id}</p>
-            <h1 className="mt-1 text-2xl font-semibold text-slate-900">{presentation.displayNameOverride ?? machine.name}</h1>
-            <p className="mt-2 text-sm text-slate-600">{machine.sector}</p>
+            <p className="font-mono text-sm text-muted">{machine.id}</p>
+            <h1 className="mt-1 text-2xl font-semibold text-primary">{presentation.displayNameOverride ?? machine.name}</h1>
+            <p className="mt-2 text-sm text-secondary">{machine.sector}</p>
           </div>
           <MachineImage className="aspect-[8/5] w-24 shrink-0 rounded-md sm:w-36" image={primaryImage(presentation)} label={machine.name} visual={machine.visual} />
         </div>
       </header>
 
       <section aria-labelledby="presentation-title" className="admin-panel space-y-4 p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-slate-900" id="presentation-title">Presentación</h2>
+        <h2 className="text-lg font-semibold text-primary" id="presentation-title">Presentación</h2>
         {canUpdatePresentation ? (
           <AdminForm action={savePresentationAction} submitLabel="Guardar presentación">
             <input name="machineRef" type="hidden" value={machine.id} />
@@ -44,26 +44,26 @@ export default async function AdminMachinePage({ params }: { params: Promise<unk
             <label className="admin-label">Descripción breve
               <textarea className="admin-input" defaultValue={presentation.shortDescription ?? ""} maxLength={1000} name="shortDescription" rows={3} />
             </label>
-            <p className="text-xs leading-5 text-slate-500">Dejá el nombre vacío para usar «{machine.name}». Estos cambios no alteran los datos técnicos.</p>
+            <p className="text-xs leading-5 text-muted">Dejá el nombre vacío para usar «{machine.name}». Estos cambios no alteran los datos técnicos.</p>
           </AdminForm>
-        ) : <p className="text-sm text-slate-600">{presentation.shortDescription ?? "Sin descripción personalizada."}</p>}
+        ) : <p className="text-sm text-secondary">{presentation.shortDescription ?? "Sin descripción personalizada."}</p>}
       </section>
 
       <section aria-labelledby="gallery-title" className="space-y-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900" id="gallery-title">Galería</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-600">La imagen principal aparece en el dashboard. Sin imágenes se utiliza la ilustración original.</p>
+          <h2 className="text-lg font-semibold text-primary" id="gallery-title">Galería</h2>
+          <p className="mt-1 text-sm leading-6 text-secondary">La imagen principal aparece en el dashboard. Sin imágenes se utiliza la ilustración original.</p>
         </div>
-        {!presentation.images.length ? <p className="admin-panel p-5 text-sm text-slate-600">Todavía no hay imágenes configuradas.</p> : null}
+        {!presentation.images.length ? <p className="admin-panel p-5 text-sm text-secondary">Todavía no hay imágenes configuradas.</p> : null}
         <ol className="space-y-4">
           {presentation.images.map((image, index) => (
             <li className="admin-panel p-5" key={image.id}>
               <div className="flex flex-col gap-5 md:flex-row">
                 <MachineImage className="aspect-[8/5] w-full max-w-64 shrink-0 rounded-md" image={image} label={machine.name} visual={machine.visual} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-slate-500">Imagen {index + 1}{image.isPrimary ? " · Principal" : ""}</p>
-                  <p className="mt-2 text-sm text-slate-900">{image.alt}</p>
-                  <a className="mt-2 block break-all text-xs text-teal-700 hover:text-teal-800" href={image.url} referrerPolicy="no-referrer" rel="noreferrer" target="_blank">Abrir imagen</a>
+                  <p className="text-xs font-medium text-muted">Imagen {index + 1}{image.isPrimary ? " · Principal" : ""}</p>
+                  <p className="mt-2 text-sm text-primary">{image.alt}</p>
+                  <a className="mt-2 block break-all text-xs text-action hover:text-action-hover" href={image.url} referrerPolicy="no-referrer" rel="noreferrer" target="_blank">Abrir imagen</a>
                   {canUpdateImages ? <div className="mt-4 flex flex-wrap items-start gap-4">
                     {!image.isPrimary ? <AdminForm action={setPrimaryImageAction} submitLabel="Usar como principal">
                       <input name="machineRef" type="hidden" value={machine.id} /><input name="imageId" type="hidden" value={image.id} />
@@ -87,7 +87,7 @@ export default async function AdminMachinePage({ params }: { params: Promise<unk
 
       {canUpdateImages ? <div className="grid gap-5 lg:grid-cols-2">
         <section aria-labelledby="external-title" className="admin-panel space-y-4 p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-slate-900" id="external-title">Agregar URL externa</h2>
+          <h2 className="text-lg font-semibold text-primary" id="external-title">Agregar URL externa</h2>
           <AdminForm action={addExternalImageAction} submitLabel="Agregar imagen">
             <input name="machineRef" type="hidden" value={machine.id} />
             <label className="admin-label">URL de la imagen
@@ -96,11 +96,11 @@ export default async function AdminMachinePage({ params }: { params: Promise<unk
             <label className="admin-label">Descripción de la imagen
               <input className="admin-input" maxLength={240} name="alt" placeholder="Vista frontal del torno CNC" required />
             </label>
-            <p className="text-xs leading-5 text-slate-500">HTTPS público con extensión JPEG, PNG o WEBP. La disponibilidad depende del sitio de origen.</p>
+            <p className="text-xs leading-5 text-muted">HTTPS público con extensión JPEG, PNG o WEBP. La disponibilidad depende del sitio de origen.</p>
           </AdminForm>
         </section>
         <section aria-labelledby="upload-title" className="admin-panel space-y-4 p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-slate-900" id="upload-title">Subir una imagen</h2>
+          <h2 className="text-lg font-semibold text-primary" id="upload-title">Subir una imagen</h2>
           {storageAvailability === "available" ? <AdminForm action={uploadImageAction} submitLabel="Subir imagen">
             <input name="machineRef" type="hidden" value={machine.id} />
             <label className="admin-label">Archivo
@@ -109,14 +109,14 @@ export default async function AdminMachinePage({ params }: { params: Promise<unk
             <label className="admin-label">Descripción de la imagen
               <input className="admin-input" maxLength={240} name="alt" required />
             </label>
-            <p className="text-xs leading-5 text-slate-500">JPEG, PNG o WEBP, hasta 5 MiB. No se admiten SVG.</p>
-          </AdminForm> : <p className="text-sm leading-6 text-slate-600">
+            <p className="text-xs leading-5 text-muted">JPEG, PNG o WEBP, hasta 5 MiB. No se admiten SVG.</p>
+          </AdminForm> : <p className="text-sm leading-6 text-secondary">
             {storageAvailability === "misconfigured" ? "El almacenamiento tiene una configuración incompleta o inválida. Contactá a quien administra el despliegue." : "La carga de archivos estará disponible cuando se configure el almacenamiento. Podés agregar imágenes mediante URL externa."}
           </p>}
         </section>
       </div> : null}
 
-      <p className="text-xs leading-5 text-slate-500">Quitar una imagen elimina su referencia en este equipo. Si quitás la principal se usa la siguiente; si quitás la última vuelve la ilustración original.</p>
+      <p className="text-xs leading-5 text-muted">Quitar una imagen elimina su referencia en este equipo. Si quitás la principal se usa la siguiente; si quitás la última vuelve la ilustración original.</p>
     </div>
   );
 }

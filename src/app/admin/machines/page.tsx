@@ -16,9 +16,9 @@ export default async function AdminMachinesPage({ searchParams }: { searchParams
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-xs font-medium uppercase tracking-widest text-slate-500">Configuración visual</p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">Máquinas</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">Nombres, descripciones e imágenes de los equipos dentro de tu ámbito de acceso.</p>
+        <p className="text-xs font-medium uppercase tracking-widest text-muted">Configuración visual</p>
+        <h1 className="mt-2 text-2xl font-semibold text-primary">Máquinas</h1>
+        <p className="mt-2 text-sm leading-6 text-secondary">Nombres, descripciones e imágenes de los equipos dentro de tu ámbito de acceso.</p>
       </header>
 
       <form className="flex flex-wrap items-end gap-3" method="get">
@@ -27,7 +27,7 @@ export default async function AdminMachinesPage({ searchParams }: { searchParams
           <input className="admin-input" defaultValue={query} maxLength={160} name="q" placeholder="Referencia, nombre o sector" type="search" />
         </label>
         <button className="admin-button" type="submit">Buscar</button>
-        {query ? <Link className="inline-flex min-h-11 items-center px-2 text-sm text-teal-700" href="/admin/machines">Limpiar</Link> : null}
+        {query ? <Link className="inline-flex min-h-11 items-center px-2 text-sm text-action" href="/admin/machines">Limpiar</Link> : null}
       </form>
 
       <div className="admin-panel overflow-x-auto">
@@ -40,13 +40,13 @@ export default async function AdminMachinesPage({ searchParams }: { searchParams
                 <td>
                   <div className="flex items-center gap-3">
                     <MachineImage className="aspect-[8/5] w-20 shrink-0 rounded-md" image={primaryImage(presentation)} label={machine.name} visual={machine.visual} />
-                    <div><p className="font-mono text-xs text-slate-500">{machine.id}</p><p className="mt-1 font-medium text-slate-900">{presentation.displayNameOverride ?? machine.name}</p></div>
+                    <div><p className="font-mono text-xs text-muted">{machine.id}</p><p className="mt-1 font-medium text-primary">{presentation.displayNameOverride ?? machine.name}</p></div>
                   </div>
                 </td>
                 <td>{machine.sector}</td>
                 <td><StatusBadge label={machine.statusLabel} status={machine.status} /></td>
                 <td>
-                  <Link className="inline-flex min-h-11 items-center font-medium text-teal-700 hover:text-teal-800" href={`/admin/machines/${machine.id}`}>
+                  <Link className="inline-flex min-h-11 items-center font-medium text-action hover:text-action-hover" href={`/admin/machines/${machine.id}`}>
                     {canUpdateImages || canUpdatePresentation ? "Editar presentación y galería" : "Ver presentación"}
                   </Link>
                 </td>
@@ -56,7 +56,7 @@ export default async function AdminMachinesPage({ searchParams }: { searchParams
           </tbody>
         </table>
       </div>
-      <p className="text-xs leading-5 text-slate-500">Esta sección no modifica sensores, telemetría, predicciones ni el modelo técnico del equipo.</p>
+      <p className="text-xs leading-5 text-muted">Esta sección no modifica sensores, telemetría, predicciones ni el modelo técnico del equipo.</p>
     </div>
   );
 }

@@ -1,11 +1,12 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { after } from "next/server";
 import { ZodError } from "zod";
 import type { AccountFormState } from "./_components/account-form";
 import { createSession, destroySession, requireAuthenticatedUser } from "@/modules/identity/auth";
-import { authenticate, changePassword, consumeAccountToken, requestPasswordReset } from "@/modules/identity/service";
+import { authenticate, changePassword, consumeAccountToken, requestPasswordReset, updateThemePreference } from "@/modules/identity/service";
 import { sendAccountMail } from "@/modules/identity/mail";
 
 function controlledError(error: unknown): AccountFormState {
@@ -28,6 +29,17 @@ export async function loginAction(_state: AccountFormState, form: FormData): Pro
 export async function logoutAction(): Promise<void> {
   await destroySession();
   redirect("/login");
+}
+
+export async function updateThemeAction(_state: AccountFormState, form: FormData): Promise<AccountFormState> {
+  const user = await requireAuthenticatedUser({ allowPasswordChange: true });
+  try { await updateThemePreference(user.id, form.get("theme")); }
+  catch (error) {
+    unstable_rethrow(error);
+    return { error: error instanceof ZodError ? "Elegí el tema claro u oscuro." : "No se pudo guardar la preferencia. Volvé a intentarlo." };
+  }
+  revalidatePath("/", "layout");
+  return { success: "Preferencia de apariencia guardada." };
 }
 
 export async function forgotPasswordAction(_state: AccountFormState, form: FormData): Promise<AccountFormState> {

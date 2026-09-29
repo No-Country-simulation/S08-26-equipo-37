@@ -13,8 +13,8 @@ export function AccountForm({ action, children, submitLabel }: {
   return (
     <form action={submit} className="grid gap-4">
       {children}
-      {state.error ? <p className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800" role="alert">{state.error}</p> : null}
-      {state.success ? <p className="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800" role="status">{state.success}</p> : null}
+      {state.error ? <p className="rounded border border-critical-border bg-critical-subtle p-3 text-sm text-critical-strong" role="alert">{state.error}</p> : null}
+      {state.success ? <p className="rounded border border-success-border bg-success-subtle p-3 text-sm text-success-strong" role="status">{state.success}</p> : null}
       <button className="admin-button" disabled={pending} type="submit">{pending ? "Procesando…" : submitLabel}</button>
     </form>
   );

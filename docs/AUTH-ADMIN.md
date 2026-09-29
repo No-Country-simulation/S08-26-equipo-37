@@ -20,6 +20,16 @@ La persistencia de acceso no valida el modelo industrial propuesto en otros docu
 
 El usuario guarda identidad, estado, fechas de acceso y cambio de contraseña y el indicador de cambio obligatorio. Sus asignaciones son múltiples; los permisos efectivos no se guardan en la cookie ni dependen de un nombre de rol. Las respuestas enviadas a componentes cliente deben excluir `passwordHash` y tokens.
 
+## Preferencia de apariencia
+
+Desde **Mi perfil → Apariencia**, cada usuario puede guardar el tema **Claro** u **Oscuro**. `User.theme` usa un enum con `light` por defecto, también para cuentas existentes. La preferencia acompaña la cuenta entre sesiones y dispositivos; una visita sin sesión usa claro, independientemente del tema del sistema operativo.
+
+La acción valida el valor con Zod y deriva el usuario exclusivamente de la sesión. Sólo actualiza su preferencia, incluso cuando tiene pendiente cambiar la contraseña, sin modificar permisos. El layout y el viewport leen el mismo usuario mediante caché de React limitada al render; el HTML inicial incluye el tema y no depende de un efecto del navegador. Al guardar se revalida el layout para aplicar la elección en la misma respuesta. La migración `20260929195310_user_theme_preference` debe aplicarse antes de servir esta versión.
+
+La comprobación de integración cubre el valor inicial, persistencia, aislamiento entre cuentas y rechazo de valores inválidos y cuentas suspendidas.
+
+Validado el 29/09/2026: 36 tests, 10 comprobaciones de integración, lint, typecheck, build y generación/validación de Prisma. En navegador se comprobó claro → oscuro → claro sin recarga, persistencia al navegar/recargar/reingresar, otra cuenta y visitas sin sesión en claro, y el perfil/dashboard oscuro en escritorio y móvil de 390 px.
+
 ## Acceso y vigencia
 
 La fuente del catálogo es [`catalog.ts`](../src/modules/identity/catalog.ts). El seed debe ser idempotente: repetirlo no duplica permisos, roles ni referencias y no reinicia la contraseña de una cuenta existente.

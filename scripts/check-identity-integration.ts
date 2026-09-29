@@ -144,6 +144,19 @@ try {
     await assert.rejects(identity.consumeAccountToken("invitation", invitationToken, passwords[1]), /enlace|invitación/);
   });
 
+  await check("theme defaults to light, persists per account and rejects invalid values", async () => {
+    assert.equal(viewer.theme, "light");
+    await identity.updateThemePreference(viewer.id, "dark");
+    const readTheme = async (id: string) => (await db.user.findUniqueOrThrow({ where: { id }, select: publicUserSelect })).theme;
+    assert.equal(await readTheme(viewer.id), "dark");
+    assert.equal(await readTheme(administrator.id), administrator.theme);
+    await assert.rejects(identity.updateThemePreference(viewer.id, "system"), z.ZodError);
+    await assert.rejects(identity.updateThemePreference(viewer.id, null), z.ZodError);
+    assert.equal(await readTheme(viewer.id), "dark");
+    await identity.updateThemePreference(viewer.id, "light");
+    assert.equal(await readTheme(viewer.id), "light");
+  });
+
   await check("password reset is single-use and revokes every session", async () => {
     await sessionsFor(viewer.id);
     const reset = await identity.requestPasswordReset(email);
@@ -174,6 +187,8 @@ try {
     await admin.userCommand(administrator.id, { userId: viewer.id, command: "suspend", confirmed: "yes" });
     assert.equal(await db.session.count({ where: { userId: viewer.id } }), 0);
     await assert.rejects(identity.authenticate(email, passwords[3]), /Email o contraseña incorrectos/);
+    await assert.rejects(identity.updateThemePreference(viewer.id, "dark"));
+    assert.equal((await db.user.findUniqueOrThrow({ where: { id: viewer.id } })).theme, "light");
     await admin.userCommand(administrator.id, { userId: viewer.id, command: "reactivate", confirmed: "yes" });
     assert.equal((await identity.authenticate(email, passwords[3])).id, viewer.id);
   });

@@ -3,10 +3,123 @@
 @theme {
   --font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --color-canvas: #f3f5f7;
+  --color-panel: #ffffff;
+  --color-subtle: var(--color-slate-50);
+  --color-inset: var(--color-slate-100);
+  --color-track: var(--color-slate-200);
+  --color-primary: var(--color-slate-900);
+  --color-emphasis: var(--color-slate-800);
+  --color-body: var(--color-slate-700);
+  --color-secondary: var(--color-slate-600);
+  --color-muted: var(--color-slate-500);
+  --color-default: var(--color-slate-200);
+  --color-strong: var(--color-slate-300);
+  --color-soft: var(--color-slate-100);
+  --color-action: var(--color-teal-700);
+  --color-action-hover: var(--color-teal-800);
+  --color-on-action: #ffffff;
+  --color-selected: var(--color-teal-50);
+  --color-critical: var(--color-rose-700);
+  --color-critical-strong: var(--color-rose-800);
+  --color-critical-subtle: var(--color-rose-50);
+  --color-critical-border: var(--color-rose-200);
+  --color-critical-mark: var(--color-rose-600);
+  --color-warning: var(--color-amber-800);
+  --color-warning-strong: var(--color-amber-900);
+  --color-warning-subtle: var(--color-amber-50);
+  --color-warning-border: var(--color-amber-200);
+  --color-warning-mark: var(--color-amber-600);
+  --color-attention: var(--color-orange-700);
+  --color-attention-strong: var(--color-orange-800);
+  --color-success: var(--color-emerald-700);
+  --color-success-strong: var(--color-emerald-800);
+  --color-success-subtle: var(--color-emerald-50);
+  --color-success-border: var(--color-emerald-200);
+  --color-success-mark: var(--color-emerald-600);
+  --color-maintenance: var(--color-sky-700);
+  --color-maintenance-mark: var(--color-sky-600);
+  --color-indicator-muted: var(--color-slate-400);
+  --color-indicator: var(--color-slate-500);
+  --color-indicator-strong: var(--color-slate-700);
 }
 
 :root {
   color-scheme: light;
+  --selection-background: #ccfbf1;
+  --selection-color: #134e4a;
+  --chart-grid: #94a3b8;
+  --chart-missing: #64748b;
+  --chart-point: #f8fafc;
+  --machine-canvas: #f1f5f9;
+  --machine-body: #dbe4e8;
+  --machine-panel: #cbd5e1;
+  --machine-viewport: #f8fafc;
+  --machine-edge: #64748b;
+  --machine-detail: #475569;
+  --machine-base: #334155;
+  --machine-accent: #0f766e;
+  --machine-warning: #b45309;
+  --machine-glass: #99c9c5;
+}
+
+/* Only semantic UI roles change. Media and the underlying Tailwind palette stay intact. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-canvas: #07111f;
+  --color-panel: #0a1828;
+  --color-subtle: #0e2033;
+  --color-inset: #132a3f;
+  --color-track: #253c52;
+  --color-primary: #f8fafc;
+  --color-emphasis: #e2e8f0;
+  --color-body: #cbd5e1;
+  --color-secondary: #a8b8cc;
+  --color-muted: #94a3b8;
+  --color-default: rgb(255 255 255 / 12%);
+  --color-strong: rgb(255 255 255 / 22%);
+  --color-soft: rgb(255 255 255 / 8%);
+  --color-action: #5eead4;
+  --color-action-hover: #99f6e4;
+  --color-on-action: #07111f;
+  --color-selected: rgb(94 234 212 / 10%);
+  --color-critical: #fda4af;
+  --color-critical-strong: #fecdd3;
+  --color-critical-subtle: rgb(251 113 133 / 10%);
+  --color-critical-border: rgb(251 113 133 / 30%);
+  --color-critical-mark: #fb7185;
+  --color-warning: #fde68a;
+  --color-warning-strong: #fef3c7;
+  --color-warning-subtle: rgb(252 211 77 / 8%);
+  --color-warning-border: rgb(252 211 77 / 25%);
+  --color-warning-mark: #fcd34d;
+  --color-attention: #fdba74;
+  --color-attention-strong: #fed7aa;
+  --color-success: #a7f3d0;
+  --color-success-strong: #d1fae5;
+  --color-success-subtle: rgb(110 231 183 / 8%);
+  --color-success-border: rgb(110 231 183 / 25%);
+  --color-success-mark: #6ee7b7;
+  --color-maintenance: #bae6fd;
+  --color-maintenance-mark: #7dd3fc;
+  --color-indicator-muted: #64748b;
+  --color-indicator: #94a3b8;
+  --color-indicator-strong: #e2e8f0;
+  --selection-background: rgb(45 212 191 / 28%);
+  --selection-color: #f8fafc;
+  --chart-grid: #94a3b8;
+  --chart-missing: #94a3b8;
+  --chart-point: #0e2033;
+  --machine-canvas: #091827;
+  --machine-body: #173148;
+  --machine-panel: #1e405b;
+  --machine-viewport: #07111f;
+  --machine-edge: #94a3b8;
+  --machine-detail: #e2e8f0;
+  --machine-base: #64748b;
+  --machine-accent: #5eead4;
+  --machine-warning: #fbbf24;
+  --machine-glass: #0f766e;
 }
 
 * {
@@ -19,8 +132,8 @@ html {
 
 body {
   margin: 0;
-  background: #f3f5f7;
-  color: #0f172a;
+  background: var(--color-canvas);
+  color: var(--color-primary);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -30,14 +143,15 @@ a {
 }
 
 a:focus-visible,
-button:focus-visible {
-  outline: 2px solid #0f766e;
+button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-action);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: #ccfbf1;
-  color: #134e4a;
+  background: var(--selection-background);
+  color: var(--selection-color);
 }
 
 .skip-link {
@@ -47,9 +161,9 @@ button:focus-visible {
   z-index: 100;
   translate: 0 -200%;
   border-radius: 0.5rem;
-  background: #0f766e;
+  background: var(--color-action);
   padding: 0.65rem 0.9rem;
-  color: #ffffff;
+  color: var(--color-on-action);
   font-size: 0.875rem;
   font-weight: 700;
 }
@@ -59,13 +173,13 @@ button:focus-visible {
 }
 
 @layer components {
-  .admin-panel { @apply rounded-lg border border-slate-200 bg-white p-5 sm:p-6; }
-  .admin-label { @apply grid gap-2 text-sm font-medium text-slate-700; }
-  .admin-input { @apply min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 focus:border-teal-700 focus:outline-2 focus:outline-offset-2 focus:outline-teal-700; }
-  .admin-button { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:cursor-wait disabled:opacity-60; }
+  .admin-panel { @apply rounded-lg border border-default bg-panel p-5 sm:p-6; }
+  .admin-label { @apply grid gap-2 text-sm font-medium text-body; }
+  .admin-input { @apply min-h-11 w-full rounded-md border border-strong bg-panel px-3 py-2 text-sm font-normal text-primary focus:border-action focus:outline-2 focus:outline-offset-2 focus:outline-action; }
+  .admin-button { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-action px-4 py-2 text-sm font-semibold text-on-action hover:bg-action-hover disabled:cursor-wait disabled:opacity-60; }
   .admin-table { @apply w-full border-collapse text-left text-sm; }
-  .admin-table th { @apply border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-600; }
-  .admin-table td { @apply border-b border-slate-200 px-4 py-3 align-top text-slate-700; }
+  .admin-table th { @apply border-b border-default bg-subtle px-4 py-3 text-xs font-semibold text-secondary; }
+  .admin-table td { @apply border-b border-default px-4 py-3 align-top text-body; }
   .admin-table tr:last-child td { @apply border-b-0; }
 }
 
