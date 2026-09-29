@@ -24,6 +24,8 @@ El usuario guarda identidad, estado, fechas de acceso y cambio de contraseña y 
 
 Desde **Mi perfil → Apariencia**, cada usuario puede guardar el tema **Claro** u **Oscuro**. `User.theme` usa un enum con `light` por defecto, también para cuentas existentes. La preferencia acompaña la cuenta entre sesiones y dispositivos; una visita sin sesión usa claro, independientemente del tema del sistema operativo.
 
+La preferencia se presenta como una fila compacta con opciones agrupadas y guardado explícito. Los paneles del perfil comparten ancho; en móvil se apilan los controles conservando áreas táctiles de al menos 44 px.
+
 La acción valida el valor con Zod y deriva el usuario exclusivamente de la sesión. Sólo actualiza su preferencia, incluso cuando tiene pendiente cambiar la contraseña, sin modificar permisos. El layout y el viewport leen el mismo usuario mediante caché de React limitada al render; el HTML inicial incluye el tema y no depende de un efecto del navegador. Al guardar se revalida el layout para aplicar la elección en la misma respuesta. La migración `20260929195310_user_theme_preference` debe aplicarse antes de servir esta versión.
 
 La comprobación de integración cubre el valor inicial, persistencia, aislamiento entre cuentas y rechazo de valores inválidos y cuentas suspendidas.
