@@ -111,7 +111,7 @@ Para este dataset se evaluaron 4 horizontes predictivos posibles según la neces
 * **Algoritmo Seleccionado:** `LightGBM Classifier` (Gradient Boosting optimizado).
 * **Target de Predicción:** `target_falla_48h` (Clasificación Binaria: 1 = Falla Inminente, 0 = Operación Normal).
 * **Alineación de Columnas:** Matriz purificada de **40 columnas predictivas**. Se eliminaron las variables con riesgo de Data Leakage (codigo_alarma_plc, estado_operativo, corriente_a y potencia_consumida_kw) y velocidad_rpm por colinealidad con carga_pct. para garantizar que el modelo aprenda de la física real de los sensores y no de pistas artificiales del simulador.
-* **Rendimiento Legítimo Obtenido:** **PR-AUC: 0.8311** y un **Recall del 87%** en el mes piloto de evaluation.
+* **Rendimiento Legítimo Obtenido:** **PR-AUC: 0.8375** y un **Recall del 87.4%** (precision 0.69) sobre el mes piloto de evaluación, con partición temporal. Medido sobre el `.joblib` de esta rama. El generador sigue aplicando el sobreconsumo del 15 % (issue #48): la corrección está en el modelo, no en el dataset.
 
 ---
 
@@ -167,8 +167,8 @@ Para este dataset se evaluaron 4 horizontes predictivos posibles según la neces
 {
   "id_maquina": "M-01",
   "falla_predicha_48h": 1,
-  "probabilidad_falla": 0.8311,
-  "score_dashboard": 83,
+  "probabilidad_falla": 0.9884,
+  "score_dashboard": 98,
   "alerta_estado": "Riesgo crítico",
   "color_hex": "#e74c3c"
 }
