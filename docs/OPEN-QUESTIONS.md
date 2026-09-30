@@ -2,6 +2,10 @@
 
 Las preguntas se priorizan por su impacto sobre el producto y los datos. Una pregunta P0 abierta no impide desarrollar trabajo independiente, pero ningún agente debe resolverla mediante una suposición silenciosa.
 
+## Persistencia del MVP
+
+[ADR 0008](./adr/0008-mvp-machine-hour-persistence.md) fija las tablas: una fila por máquina y hora, predicción separada del evento real, y alerta con revisión humana. No cierra la definición operativa de falla, el umbral de alerta, si la salida se muestra como probabilidad, ni cómo llega una predicción al producto.
+
 ## P0 — define la promesa del MVP
 
 1. ¿Qué familia de máquinas será utilizada?

@@ -4,7 +4,7 @@ La incorporación de autenticación, usuarios, roles, accesos, auditoría y pres
 
 ## Límites de la entrega
 
-El backoffice administra identidad y presentación sobre los equipos del mock. No agrega telemetría, sensores, predicciones, órdenes de trabajo, ERP/CMMS, notificaciones push, tiempo real, SSO ni MFA. Los permisos de alertas describen capacidades del catálogo; por sí solos no implementan las operaciones de un backend de mantenimiento.
+El backoffice administra identidad y presentación sobre los equipos del mock. No opera telemetría, sensores, predicciones ni órdenes de trabajo. Esos modelos ya están en el schema ([ADR 0008](./adr/0008-mvp-machine-hour-persistence.md)) y este módulo no los usa. Tampoco agrega ERP/CMMS, notificaciones push, tiempo real, SSO ni MFA. Los permisos de alertas describen capacidades del catálogo; por sí solos no implementan las operaciones de un backend de mantenimiento.
 
 La persistencia de acceso no valida el modelo industrial propuesto en otros documentos. `AccessResource` contiene referencias de autorización, mientras `MachinePresentation` y `MachineImage` contienen personalización. No se crean plantas ni organizaciones ficticias para completar el seed.
 
@@ -16,7 +16,7 @@ La persistencia de acceso no valida el modelo industrial propuesto en otros docu
 | `src/modules/admin` | Usuarios, roles, asignaciones, resumen administrativo y consulta de auditoría |
 | `src/modules/machine-presentation` | Personalización, galería, validación de imágenes y almacenamiento opcional |
 | `src/app` | Server Components y acciones que coordinan los casos de uso; sin acceso directo a Prisma |
-| `prisma/schema.prisma` | `User`, `Session`, `Role`, `Permission`, `RolePermission`, `UserRoleAssignment`, `AccessResource`, `Invitation`, `PasswordResetToken`, `AuthRateLimit`, `MachinePresentation`, `MachineImage`, `AuditLog` |
+| `prisma/schema.prisma` | Identidad y presentación: `User`, `Session`, `Role`, `Permission`, `RolePermission`, `UserRoleAssignment`, `AccessResource`, `Invitation`, `PasswordResetToken`, `AuthRateLimit`, `MachinePresentation`, `MachineImage`, `AuditLog`. El dominio de mantenimiento está en el mismo archivo y se describe en [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md) |
 
 El usuario guarda identidad, estado, fechas de acceso y cambio de contraseña y el indicador de cambio obligatorio. Sus asignaciones son múltiples; los permisos efectivos no se guardan en la cookie ni dependen de un nombre de rol. Las respuestas enviadas a componentes cliente deben excluir `passwordHash` y tokens.
 

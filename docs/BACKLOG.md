@@ -72,10 +72,11 @@ Qué **no** podemos prometer: dataset sintético, 261 eventos de falla, grilla h
 ## 3. Software — convertir eso en una app usable
 
 ### [#15](../../issues/15) · Schema Prisma + migración inicial
-Traducir el dataset a tablas: `activos`, `lecturas_telemetria`, `predicciones`, `alertas`, `eventos`.
+El schema del MVP ya está en `prisma/schema.prisma`: `activos`, `lecturas_maquina_hora`, `predicciones_ia`, `eventos_falla`, `alertas`, `revisiones_alerta`, `ordenes_trabajo`. La decisión está en [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md).
 
-- **Decisiones**: naming español vs inglés (merece **ADR**), PK de activos, constraint único `(id_maquina, fecha_hora)`, JSONB para la explicabilidad del modelo.
-- **Terminado cuando**: `npm run db:validate` OK + migración nombrada.
+- **Ya resuelto en el schema:** nombres en español para los modelos nuevos (la identidad sigue en inglés), clave de `Activo`, unicidad `(activo, hora)`, sensores nulos, explicabilidad en JSON opcional, una alerta activa por máquina.
+- **Sigue abierto:** generar y revisar la migración. `npm run db:validate` ya pasa.
+- **Terminado cuando**: la migración nombrada existe y se revisó el SQL.
 
 ### [#16](../../issues/16) · Seed reproducible desde el CSV v2
 ⚠️ Acá **seed = datos iniciales en la base** (no la semilla 42 del generador). Carga 25 máquinas y 72.000 lecturas.

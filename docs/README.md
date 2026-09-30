@@ -31,9 +31,9 @@
 | Documento | Qué contiene | Estado |
 | --- | --- | --- |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Monolito modular server-first, flujos de request, workspace de ML (Python) y límites | Existe |
-| [`adr/`](./adr/) | Decisiones de arquitectura: 0001 monolito modular · 0002 Prisma/PostgreSQL · 0003 server-first · 0004 sin tiempo real prematuro · 0005 convención de documentación · 0006 artefactos binarios · **0007 identidad y administración** | Existe |
+| [`adr/`](./adr/) | Decisiones de arquitectura: 0001 monolito modular · 0002 Prisma/PostgreSQL · 0003 server-first · 0004 sin tiempo real prematuro · 0005 convención de documentación · 0006 artefactos binarios · 0007 identidad y administración · **0008 persistencia del MVP por máquina y hora** | Existe |
 | [`AUTH-ADMIN.md`](./AUTH-ADMIN.md) | Autenticación, roles, ámbitos, backoffice, presentación y matriz de requisitos verificables | En verificación; SMTP local configurado, entrega externa pendiente; almacenamiento opcional |
-| [`DATA-MODEL.md`](./DATA-MODEL.md) | Esquema conceptual E-R, mapeo del dataset a entidades y flujo de trazabilidad | **Nuevo** |
+| [`DATA-MODEL.md`](./DATA-MODEL.md) | Modelo Prisma del MVP (máquina-hora) y esquema conceptual anterior, no implementado | Schema validado; migración pendiente |
 | [`SECURITY.md`](./SECURITY.md) | Fronteras de confianza, sesiones, autorización, secretos, imágenes y base de datos | Actualizado para identidad y administración |
 
 ## Trabajo y proceso
