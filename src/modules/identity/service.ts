@@ -10,6 +10,11 @@ export const passwordSchema = z.string().min(12, "Usá al menos 12 caracteres.")
 export const tokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
 const dummyHash = `scrypt-v1$${"0".repeat(32)}$${"0".repeat(128)}`;
 
+export async function updateThemePreference(userId: string, input: unknown): Promise<void> {
+  const theme = z.enum(["light", "dark"]).parse(input);
+  await getPrisma().user.update({ where: { id: userId, status: "ACTIVE" }, data: { theme } });
+}
+
 export async function rateLimit(kind: string, identifier: string, limit: number, minutes: number): Promise<boolean> {
   const key = hashToken(`${kind}:${identifier}`);
   const resetAt = new Date(Date.now() + minutes * 60_000);

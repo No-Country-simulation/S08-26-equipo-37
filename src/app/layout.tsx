@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { getCurrentUser } from "@/modules/identity/auth";
 
 import "./globals.css";
 
@@ -17,17 +18,21 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
-  colorScheme: "light",
-  initialScale: 1,
-  themeColor: "#ffffff",
-  viewportFit: "cover",
-  width: "device-width",
-};
+export async function generateViewport(): Promise<Viewport> {
+  const theme = (await getCurrentUser())?.theme ?? "light";
+  return {
+    colorScheme: theme,
+    initialScale: 1,
+    themeColor: theme === "dark" ? "#07111f" : "#ffffff",
+    viewportFit: "cover",
+    width: "device-width",
+  };
+}
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  const theme = (await getCurrentUser())?.theme ?? "light";
   return (
-    <html data-scroll-behavior="smooth" lang="es">
+    <html data-scroll-behavior="smooth" data-theme={theme} lang="es">
       <body>{children}</body>
     </html>
   );

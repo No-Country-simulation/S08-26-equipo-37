@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
@@ -9,7 +10,7 @@ import { appUrl } from "./tokens";
 import type { Db } from "./db";
 
 export const publicUserSelect = {
-  id: true, name: true, email: true, avatarUrl: true, status: true,
+  id: true, name: true, email: true, avatarUrl: true, theme: true, status: true,
   lastLoginAt: true, passwordChangedAt: true, mustChangePassword: true,
   createdAt: true, updatedAt: true, disabledAt: true,
   assignments: { include: { role: { include: { permissions: { include: { permission: true } } } } } },
@@ -24,13 +25,13 @@ export async function getActor(db: Db, userId: string): Promise<CurrentUser> {
   return actor;
 }
 
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return null;
   const session = await getPrisma().session.findUnique({ where: { tokenHash: hashToken(token) }, select: { expiresAt: true, user: { select: publicUserSelect } } });
   if (!session || session.expiresAt <= new Date() || session.user.status !== "ACTIVE") return null;
   return session.user;
-}
+});
 
 export async function requireAuthenticatedUser(options: { allowPasswordChange?: boolean } = {}) {
   const user = await getCurrentUser();
