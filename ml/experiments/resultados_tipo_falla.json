@@ -1,0 +1,53 @@
+{
+  "completa": {
+    "exactitud": 0.9552,
+    "macro_f1": 0.9561,
+    "por_clase": {
+      "Fallo_Motor_Termico": {
+        "precision": 0.968,
+        "recall": 0.949,
+        "soporte": 897
+      },
+      "Fallo_Presion_Bomba": {
+        "precision": 0.961,
+        "recall": 0.937,
+        "soporte": 985
+      },
+      "Fallo_Rodamiento": {
+        "precision": 0.925,
+        "recall": 1.0,
+        "soporte": 530
+      }
+    }
+  },
+  "sin_banderas": {
+    "exactitud": 0.9552,
+    "macro_f1": 0.9561,
+    "por_clase": {
+      "Fallo_Motor_Termico": {
+        "precision": 0.968,
+        "recall": 0.949,
+        "soporte": 897
+      },
+      "Fallo_Presion_Bomba": {
+        "precision": 0.961,
+        "recall": 0.937,
+        "soporte": 985
+      },
+      "Fallo_Rodamiento": {
+        "precision": 0.925,
+        "recall": 1.0,
+        "soporte": 530
+      }
+    }
+  },
+  "clase_mayoritaria": 0.4084,
+  "filas_test": 2412,
+  "eventos_dataset": 121,
+  "eventos_test": 45,
+  "eventos_test_por_tipo": {
+    "Fallo_Presion_Bomba": 19,
+    "Fallo_Motor_Termico": 17,
+    "Fallo_Rodamiento": 9
+  }
+}
