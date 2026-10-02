@@ -305,6 +305,7 @@ model LecturaMaquinaHora {
   predicciones                  PrediccionIA[] @relation("LecturaReferenciaPrediccion")
 
   @@unique([activoId, fechaHora])
+  @@unique([id, activoId])
   @@index([activoId, fechaHora])
   @@index([fechaHora])
   @@map("lecturas_maquina_hora")
@@ -312,6 +313,7 @@ model LecturaMaquinaHora {
 
 /// Inferencia real del modelo. No guarda target_* del dataset.
 /// estadoSaludSugerido es opcional: POST /api/v1/predict/falla no lo devuelve.
+/// La lectura de referencia debe ser del mismo activo (FK compuesta con activoId).
 model PrediccionIA {
   id                    String              @id @default(cuid())
   activoId              String              @map("id_activo")
@@ -324,9 +326,10 @@ model PrediccionIA {
   umbralAlerta          Float?              @map("umbral_alerta")
   variablesExplicativas Json?               @map("variables_explicativas")
   activo                Activo              @relation(fields: [activoId], references: [id], onDelete: Restrict)
-  lecturaReferencia     LecturaMaquinaHora? @relation("LecturaReferenciaPrediccion", fields: [lecturaReferenciaId], references: [id], onDelete: Restrict)
+  lecturaReferencia     LecturaMaquinaHora? @relation("LecturaReferenciaPrediccion", fields: [lecturaReferenciaId, activoId], references: [id, activoId], onDelete: Restrict)
   alerta                Alerta?
 
+  @@unique([id, activoId])
   @@index([activoId, fechaCalculo])
   @@index([lecturaReferenciaId])
   @@map("predicciones_ia")
@@ -349,6 +352,7 @@ model EventoFalla {
 
 /// Caso operativo. closedAt nulo significa alerta activa.
 /// El índice parcial impide más de una alerta activa por activo.
+/// La predicción debe ser del mismo activo (FK compuesta con activoId).
 model Alerta {
   id                 String           @id @default(cuid())
   activoId           String           @map("id_activo")
@@ -360,12 +364,14 @@ model Alerta {
   createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   closedAt           DateTime?        @map("closed_at") @db.Timestamptz(3)
   activo             Activo           @relation(fields: [activoId], references: [id], onDelete: Restrict)
-  prediccion         PrediccionIA     @relation(fields: [prediccionId], references: [id], onDelete: Restrict)
+  prediccion         PrediccionIA     @relation(fields: [prediccionId, activoId], references: [id, activoId], onDelete: Restrict)
   asignadaA          User?            @relation("AlertasAsignadas", fields: [asignadaAUsuarioId], references: [id], onDelete: Restrict)
   revisiones         RevisionAlerta[]
   ordenTrabajo       OrdenTrabajo?
 
   @@unique([activoId], map: "uq_alerta_activa_por_activo", where: { closedAt: null })
+  @@unique([id, activoId])
+  @@unique([prediccionId, activoId])
   @@index([activoId, estado])
   @@index([asignadaAUsuarioId, estado])
   @@map("alertas")
@@ -388,6 +394,7 @@ model RevisionAlerta {
 }
 
 /// Intervención operativa. Opcional respecto de una alerta o una revisión.
+/// Si tiene alerta, debe ser del mismo activo (FK compuesta con activoId).
 model OrdenTrabajo {
   id                 String         @id @default(cuid())
   activoId           String         @map("id_activo")
@@ -400,9 +407,10 @@ model OrdenTrabajo {
   createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   closedAt           DateTime?      @map("closed_at") @db.Timestamptz(3)
   activo             Activo         @relation(fields: [activoId], references: [id], onDelete: Restrict)
-  alerta             Alerta?        @relation(fields: [alertaId], references: [id], onDelete: Restrict)
+  alerta             Alerta?        @relation(fields: [alertaId, activoId], references: [id, activoId], onDelete: Restrict)
   tecnicoAsignado    User?          @relation("OrdenesAsignadas", fields: [tecnicoAsignadoId], references: [id], onDelete: Restrict)
 
+  @@unique([alertaId, activoId])
   @@index([activoId, estadoOrden])
   @@index([tecnicoAsignadoId, estadoOrden])
   @@map("ordenes_trabajo")
