@@ -35,7 +35,7 @@ PredictiveMaintenance es una plataforma de **mantenimiento predictivo industrial
 - Contexto: proyecto dentro de la **Simulación Laboral No Country** (5 semanas, 31 ago – 06 oct 2026) → **deadline corto, MVP demostrable**.
 - Usuario principal: **responsable/líder de mantenimiento**. Decisión que habilita: *"¿a qué máquina intervengo y en qué orden?"*.
 - Datos: **dataset sintético de "Dutaya" v2** (72.000 filas máquina-hora, 25 máquinas, 30 columnas, targets de falla 48 h / tipo / RUL / estado de salud) + diccionario oficial + script generador con SEED=42. Datasets públicos de control (AI4I 2020, NASA C-MAPSS).
-- Repo del equipo (público): `https://github.com/No-Country-simulation/S08-26-equipo-37` — bootstrap **Next.js 16 fullstack + Prisma 7 + PostgreSQL 17 + Docker + CI** con docs/ADRs (monolito modular, server-first, sin tiempo real prematuro). **Fase 0 (bootstrap) prácticamente lista; el esquema Prisma está vacío a propósito** hasta validar decisiones.
+- Repo del equipo (público): `https://github.com/No-Country-simulation/S08-26-equipo-37` — bootstrap **Next.js 16 fullstack + Prisma 7 + PostgreSQL 17 + Docker + CI** con docs/ADRs (monolito modular, server-first, sin tiempo real prematuro). **Fase 0 (bootstrap) prácticamente lista.** El dominio del MVP ya está en `prisma/schema.prisma` ([ADR 0008](./adr/0008-mvp-machine-hour-persistence.md)); la migración todavía no se generó.
 - MVP acotado: clasificación binaria de riesgo "falla ≤ 48 h" por máquina-hora + estado de salud + priorización económica. RUL fino, por componente, CMMS real y datos reales → **fase 2+**.
 - **Decisiones del MVP: aprobadas** (los 11 puntos) en la reunión del **2026-09-10**; roles vigentes: **PM en ejercicio (1 semana, rotativo)**, **referentes DS: Dutaya + Pedro**, **software engineer: Seba**. Seguimiento en **GitHub Projects** y canales **#data_analist** / **#software_engineer**. Próxima reunión: **lunes 14/09, 12:00 ARG**.
 - Este documento reúne el **marco de dominio de planta** (§4), el **alcance**, los **datos**, la **arquitectura** y las **decisiones** del MVP en un único lugar.
@@ -195,24 +195,26 @@ Kaggle AI4I 2020 · machine-failure-predictions · equipment-failure-prediction-
 
 ## 7. Modelo de datos
 
-El **esquema conceptual completo** (entidades, campos, enums), el **mapeo del dataset a entidades** y el **flujo transaccional de trazabilidad** viven en [`DATA-MODEL.md`](./DATA-MODEL.md). Acá queda solo el resumen:
+El schema del MVP está en `prisma/schema.prisma` y se registra en [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md). Tablas, nulos y diferencias con la API de Data Science están en [`DATA-MODEL.md`](./DATA-MODEL.md).
 
 | Pieza | Dónde está |
 | --- | --- |
-| Esquema E-R y entidades (`activos`, `sensores_canales`, `lecturas_telemetria`, `predicciones_ia`, `diagnosticos_modos_falla`, `historial_estados_activo`, `ordenes_trabajo`) | [`DATA-MODEL.md`](./DATA-MODEL.md) |
-| Mapeo de las 30 columnas del dataset → entidades (propuesta para Prisma) | [`DATA-MODEL.md`](./DATA-MODEL.md) |
-| Decisión de implementación y migraciones | [ADR 0002](./adr/0002-prisma-postgresql.md) · [#15](../../issues/15) |
+| Modelos Prisma del MVP (`Activo`, `LecturaMaquinaHora`, `PrediccionIA`, `EventoFalla`, `Alerta`, `RevisionAlerta`, `OrdenTrabajo`) | `prisma/schema.prisma` · [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md) |
+| Mapeo del dataset y contrato de inferencia | [`DATA-MODEL.md`](./DATA-MODEL.md) |
+| Esquema conceptual anterior (`sensores_canales`, `lecturas_telemetria`, RUL, `diagnosticos_modos_falla`) | [`DATA-MODEL.md`](./DATA-MODEL.md), sección de referencia. No está implementado |
+| Migración | Pendiente ([#15](../../issues/15)). El schema valida; no hay migración nueva |
 
 ## 8. Arquitectura y stack (estado real: repo del equipo)
 
-### 8.1 Decisiones vigentes (ADRs aceptados 2026-09-03)
+### 8.1 Decisiones vigentes
 
 | ADR | Decisión |
 |---|---|
 | **0001 Monolito modular** | Una sola app Next.js y un solo despliegue; módulos internos; microservicios descartados para el MVP. |
-| **0002 Prisma + PostgreSQL** | PostgreSQL + Prisma (esquema/migraciones/acceso tipado server-only); sin modelos hasta validar datos. |
+| **0002 Prisma + PostgreSQL** | PostgreSQL + Prisma (esquema/migraciones/acceso tipado server-only). El aplazamiento de modelos de negocio lo reemplaza [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md) para el MVP. |
 | **0003 Next.js server-first** | Server Components por defecto; Client solo con necesidad; Server Actions para mutaciones de UI; Route Handlers para APIs/integraciones; Zod en fronteras; **SPA + API separada descartada**. |
 | **0004 Sin tiempo real prematuro** | HTTP + batch/programado; sin WebSockets/brokers hasta caso validado. |
+| **0008 Persistencia máquina-hora** | Una fila por máquina y hora. Schema validado; migración pendiente. |
 
 → **Resuelve las tensiones abiertas en v0.1** (§8.3): no hay backend REST separado (ni FastAPI/NestJS) para el MVP — la app Next es el backend (coherente con ADR 0003 y con la explicación de Next fullstack). El trabajo batch (importación de dataset, features, scoring ML) irá como **comando repetible del repo ejecutado como job separado** cuando exista necesidad medida (ARCHITECTURE.md §Batch work). Las series temporales en TimescaleDB/InfluxDB quedan para fase 2+ si el volumen lo exige.
 
@@ -263,7 +265,7 @@ RUL fino (regresión/supervivencia), predicción del **tipo** de falla como sali
 4. **QA/limpieza** del pipeline contra la ground truth del notebook (fase F1/F4).
 5. **EDA + feature engineering** (ventanas/derivadas, sin targets ni alarmas como features).
 6. **Línea base modelo 48 h** (clasificación, partición temporal estricta; recall ≥ 70–80 % a definir).
-7. **Decisión de esquema Prisma** con el mapeo del §7.2 (Fase 2) + seed desde el CSV v2.
+7. **Migración y seed** del schema ya decidido ([ADR 0008](./adr/0008-mvp-machine-hour-persistence.md)) desde el CSV v2.
 8. **Priorización** (score × criticidad × costo) y **dashboard de riesgo por máquina** (F3/F5).
 9. **Alertas + feedback** (F6/F7) y **validación MVP** (F8).
 10. **Documento de limitaciones**: dataset sintético, censura RUL, leakage (declarado en el repo) → [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md).
@@ -288,7 +290,7 @@ RUL fino (regresión/supervivencia), predicción del **tipo** de falla como sali
 | [`PRODUCT.md`](./PRODUCT.md) | Hechos, hipótesis y decisiones de producto |
 | [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) | Parámetros del MVP a acordar (target, features, métricas, umbral) |
 | [`DOMAIN-ONTOLOGY.md`](./DOMAIN-ONTOLOGY.md) | Taxonomía PdM: activos, variables, canales, modos de falla, estados, criticidad |
-| [`DATA-MODEL.md`](./DATA-MODEL.md) | Esquema conceptual E-R y mapeo del dataset a entidades |
+| [`DATA-MODEL.md`](./DATA-MODEL.md) | Modelo Prisma del MVP y esquema conceptual anterior |
 | [`DATA-STRATEGY.md`](./DATA-STRATEGY.md) | Regla rectora, inventario mínimo y datasets de control |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`adr/`](./adr/) | Arquitectura vigente y decisiones registradas |
 | [`BACKLOG.md`](./BACKLOG.md) · [`MINUTES.md`](./MINUTES.md) | Qué significa cada tarea · minutas compiladas |

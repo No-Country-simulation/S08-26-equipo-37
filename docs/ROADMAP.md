@@ -24,7 +24,7 @@ Esta tabla registra **evidencia**, no cierres: el cierre de cada fase lo confirm
 | --- | --- | --- |
 | **F0** Bootstrap técnico | La app instala, compila y pasa sus comprobaciones; CI verde; health check independiente de la base; deploy automático | Criterio cumplido |
 | **F1** Exploración del dataset | Diccionario en [`../ml/README.md`](../ml/README.md), generador reproducible (SEED 42), dataset v2 validado en CI, problema elegido (falla binaria a 48 h). Falta el perfil contra la ground truth ([#10](../../issues/10)) | Criterio casi cumplido |
-| **F2** Inventario de máquinas | Catálogo de las 25 máquinas en la interfaz, sobre datos simulados. El seed sobre base real no existe ([#16](../../issues/16)) | Pendiente |
+| **F2** Inventario de máquinas | Catálogo de las 25 máquinas en la interfaz, sobre datos simulados. El modelo `Activo` ya está en el schema ([ADR 0008](./adr/0008-mvp-machine-hour-persistence.md)); el seed sobre base real no existe ([#16](../../issues/16)) | Pendiente |
 | **F3** Visualización de sensores | Vista temporal con unidades y manejo de nulos, con datos simulados ([#17](../../issues/17)) | Parcial |
 | **F4** Baseline de condición | LightGBM con PR-AUC 0,842 y partición temporal; limitaciones documentadas. Faltan matriz de confusión, split por máquina y comparación contra el calendario ([#13](../../issues/13)) | Parcial |
 | **F5** Priorización de riesgo | Lista priorizada en la interfaz, con un índice que **no** es una probabilidad ([#18](../../issues/18)) | Parcial |
@@ -36,7 +36,7 @@ Esta tabla registra **evidencia**, no cierres: el cierre de cada fase lo confirm
 
 **Resultado:** aplicación Next.js ejecutable, configuración mínima, documentación operativa, validaciones automáticas y health check independiente de la base de datos.
 
-**Criterio de salida:** el proyecto se instala, compila y pasa sus comprobaciones documentadas sin modelos de dominio inventados.
+**Criterio de salida (cumplido en el bootstrap):** el proyecto se instala, compila y pasa sus comprobaciones documentadas sin modelos de dominio inventados. El dominio del MVP se agregó después, cuando el dataset ya estaba disponible ([ADR 0008](./adr/0008-mvp-machine-hour-persistence.md)). La migración de esas tablas sigue pendiente.
 
 ## Fase 1 — Exploración del dataset
 

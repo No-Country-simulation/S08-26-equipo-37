@@ -11,3 +11,4 @@ Las decisiones vigentes del proyecto se registran aquí. Cada ADR conserva su hi
 | [0005](./0005-documentation-conventions.md) | Documentación: repositorio como fuente única y nombres de archivo en inglés | Aceptado |
 | [0006](./0006-binary-artifacts.md) | Dónde viven los artefactos binarios: datasets en LFS y umbral de 512 KiB para modelos | Propuesto |
 | [0007](./0007-identity-administration.md) | Identidad, permisos por ámbito y vigencia, administración y presentación independiente del dominio técnico | Aceptado |
+| [0008](./0008-mvp-machine-hour-persistence.md) | Persistencia del MVP: una fila por máquina y hora | Aceptado — schema validado, migración pendiente |

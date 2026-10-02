@@ -282,7 +282,7 @@ El modelo entrega `predict_proba` y lo que está medido es **discriminación** (
 
 El pipeline de limpieza filtró la base para conservar únicamente `estado_operativo == 1`, y con eso quitó las **1.530 horas de máquina apagada** (72.000 → 70.470 filas). El notebook lo documenta como "Depuración de Horas Muertas".
 
-Verificado sobre el dataset canónico: esas 1.530 filas son **exactamente** las que tienen `target_estado_salud = "Parada_Mantenimiento"` (los dos conjuntos coinciden fila por fila). O sea que el filtro **eliminó una clase completa de la etiqueta de estado**, no solo horas vacías. Cualquier trabajo futuro sobre estados de salud —la entidad `historial_estados_activo` de [`DATA-MODEL.md`](./DATA-MODEL.md)— se queda sin ese estado en los datos limpios.
+Verificado sobre el dataset canónico: esas 1.530 filas son **exactamente** las que tienen `target_estado_salud = "Parada_Mantenimiento"` (los dos conjuntos coinciden fila por fila). O sea que el filtro **eliminó una clase completa de la etiqueta de estado**, no solo horas vacías. El schema del MVP no tiene `historial_estados_activo`. `estadoSaludSugerido` en `PrediccionIA` es opcional y la API actual no lo completa ([ADR 0008](./adr/0008-mvp-machine-hour-persistence.md)).
 
 El efecto no es cosmético: **el modelo nunca vio una máquina detenida**, así que nada lo habilita a distinguir "detenida porque es domingo" de "detenida porque se rompió". Y el contrato de la API tampoco manda `estado_operativo` (se quitó por fuga de datos), de modo que **una lectura de una máquina apagada se puntúa igual que una en marcha**: los sensores en cero entran al modelo como una observación más y devuelven una probabilidad con apariencia válida.
 
