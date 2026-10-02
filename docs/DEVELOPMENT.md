@@ -129,7 +129,7 @@ Server Components are the default. Use a Client Component only for browser APIs,
 
 ## Data and Prisma
 
-Identity, administration, audit, and presentation persistence are explicitly approved in [ADR 0007](./adr/0007-identity-administration.md). The MVP maintenance schema is in `prisma/schema.prisma` and [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md). It is validated, and the migration is not created yet. For an approved schema change:
+Identity, administration, audit, and presentation persistence are explicitly approved in [ADR 0007](./adr/0007-identity-administration.md). The MVP maintenance schema is in `prisma/schema.prisma` and [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md). It is validated, and the migration is not created yet; the steps to create and verify it are in [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md#migración-pendiente). For an approved schema change:
 
 1. Update `prisma/schema.prisma`.
 2. Run `npm run db:validate` and `npm run db:generate`.

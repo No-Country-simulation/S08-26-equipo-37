@@ -39,6 +39,7 @@ Las personas son el `User` ya existente. No hay un modelo `Usuario`.
 | Sensor faltante | `Float?`. No se convierte a `0` |
 | Odómetros | En `LecturaMaquinaHora`, no como estado único de `Activo` |
 | Una alerta activa por máquina | Índice único parcial donde `closedAt` es nulo |
+| Misma máquina en toda la cadena | Predicción → lectura, alerta → predicción y orden → alerta son FKs compuestas con `activoId`. Una alerta de A no puede apuntar a una predicción de B |
 | Cierre de alerta | `estado = CERRADA` y `closedAt` se escriben juntos. El resultado es `CORRECTA`, `FALSO_POSITIVO` o `DESCARTADA` |
 
 ### Qué entra desde el dataset
