@@ -3,12 +3,72 @@
 | Campo | Valor |
 | --- | --- |
 | Proyecto | PredictiveMaintenance (NoCountry) |
-| Documento | Esquema conceptual de base de datos |
-| Origen | Documento de arquitectura de datos del equipo (convertido a Markdown) |
+| Documento | Modelo persistido del MVP y referencia conceptual anterior |
+| Origen | Schema en `prisma/schema.prisma` ([ADR 0008](./adr/0008-mvp-machine-hour-persistence.md)) y documento de arquitectura de datos del equipo |
 | Ubicación | `docs/DATA-MODEL.md` |
-| Relacionados | [`DOMAIN-ONTOLOGY.md`](./DOMAIN-ONTOLOGY.md) · [`SCOPE.md`](./SCOPE.md) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [ADR 0002](./adr/0002-prisma-postgresql.md) |
+| Relacionados | [`DOMAIN-ONTOLOGY.md`](./DOMAIN-ONTOLOGY.md) · [`SCOPE.md`](./SCOPE.md) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [ADR 0002](./adr/0002-prisma-postgresql.md) · [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md) |
 
-> **Estado:** esquema **conceptual**. La implementación en Prisma está pendiente y se decide en [#15](../../issues/15); el repo mantiene `prisma/schema.prisma` sin modelos de negocio hasta que las decisiones estén cerradas ([ADR 0002](./adr/0002-prisma-postgresql.md)).
+> **Estado:** el MVP está modelado en `prisma/schema.prisma` y validado con Prisma 7.10. La migración todavía no existe ([#15](../../issues/15)). La aplicación no lee estas tablas. Las secciones marcadas como referencia conceptual describen un diseño anterior y no están implementadas.
+
+## Implementación del MVP
+
+La unidad de persistencia es una máquina en una hora. El flujo es:
+
+```text
+Activo → LecturaMaquinaHora → PrediccionIA → Alerta → RevisionAlerta → OrdenTrabajo
+Activo → EventoFalla
+```
+
+`EventoFalla` sirve después para contrastar una alerta con una falla real. `OrdenTrabajo` es opcional: una revisión puede descartar la alerta y terminar ahí.
+
+| Modelo Prisma | Tabla | Qué guarda |
+| --- | --- | --- |
+| `Activo` | `activos` | Identificador de planta, tipo, modelo, marca, línea, antigüedad, criticidad, costo de parada y potencia nominal |
+| `LecturaMaquinaHora` | `lecturas_maquina_hora` | Sensores, `estadoOperativo` y odómetros de esa hora |
+| `PrediccionIA` | `predicciones_ia` | Inferencia real: falla a 48 h, probabilidad, versión del modelo |
+| `EventoFalla` | `eventos_falla` | Hecho real de falla, distinto de la predicción |
+| `Alerta` | `alertas` | Caso operativo con estado y, al cerrar, resultado |
+| `RevisionAlerta` | `revisiones_alerta` | Quién decidió, qué decidió y el motivo |
+| `OrdenTrabajo` | `ordenes_trabajo` | Intervención humana, con alerta de origen opcional |
+
+Las personas son el `User` ya existente. No hay un modelo `Usuario`.
+
+| Regla | Cómo queda |
+| --- | --- |
+| Una sola fila por máquina y hora | `@@unique([activoId, fechaHora])` |
+| Sensor faltante | `Float?`. No se convierte a `0` |
+| Odómetros | En `LecturaMaquinaHora`, no como estado único de `Activo` |
+| Una alerta activa por máquina | Índice único parcial donde `closedAt` es nulo |
+| Misma máquina en toda la cadena | Predicción → lectura, alerta → predicción y orden → alerta son FKs compuestas con `activoId`. Una alerta de A no puede apuntar a una predicción de B |
+| Cierre de alerta | `estado = CERRADA` y `closedAt` se escriben juntos. El resultado es `CORRECTA`, `FALSO_POSITIVO` o `DESCARTADA` |
+
+### Qué entra desde el dataset
+
+| Destino | Columnas |
+| --- | --- |
+| `Activo` | `id_maquina`, `tipo_equipo`, `modelo`, `marca`, `linea_produccion`, `antiguedad_anos`, `criticidad`, `costo_parada_hora_usd`, `potencia_nominal_kw` |
+| `LecturaMaquinaHora` | `fecha_hora`, `estado_operativo`, ocho sensores, `horas_operacion_totales`, `ciclos_acumulados`, `horas_desde_ultimo_mantenimiento`, `conteo_fallas_previas` |
+| `EventoFalla` | `falla_inicio_disparo`, `falla_estado_causa` |
+
+No se guardan como telemetría ni como columnas de predicción: `target_falla_48h`, `target_tipo_falla`, `target_rul_horas`, `target_estado_salud`, `codigo_alarma_plc`, medias o desvíos móviles, `mes`, `dia_semana`, `vibracion_critica` y `temperatura_critica`.
+
+### Contrato de la API de Data Science
+
+`POST /api/v1/predict/falla` devuelve `id_maquina`, `falla_predicha_48h`, `probabilidad_falla`, `score_dashboard`, `alerta_estado` y `color_hex`.
+
+| Campo de `PrediccionIA` | Relación con la API |
+| --- | --- |
+| `fallaPredicha48h` | `falla_predicha_48h` (0/1), guardado como booleano |
+| `probabilidadFalla48h` | `probabilidad_falla` |
+| `versionModelo` | Obligatorio en la base. El endpoint no lo envía; lo informa quien persiste la inferencia |
+| `estadoSaludSugerido`, `umbralAlerta`, `variablesExplicativas` | Opcionales. La API actual no los devuelve |
+| — | `score_dashboard`, `alerta_estado` y `color_hex` no se persisten |
+
+La API pide sensores no nulos y no envía `velocidad_rpm` ni `estado_operativo`. La base sí los conserva, porque describen la hora observada. Los odómetros viajan una vez en el payload de inferencia y se guardan en cada lectura.
+
+## Referencia conceptual anterior
+
+El texto que sigue es el esquema E-R v1.0 (canales de sensor, telemetría escalar, RUL y diagnóstico de modo de falla). No está en Prisma.
 
 [BK] ARCH - Esquema Conceptual de Base de Datos para Mantenimiento Predictivo v1.0
 ## 1. Sentido y Propósito del Entregable
@@ -185,7 +245,9 @@ Coordina la validación humana y la ejecución de intervenciones en planta.
 
 ---
 
-## Mapeo del dataset a entidades (propuesta para Prisma)
+## Mapeo del dataset en el esquema conceptual v1.0
+
+Esta tabla no es el schema implementado. Conserva el diseño anterior, con odómetros en el activo y targets como entidades de validación.
 
 | Entidad | Columnas del CSV que la pueblan |
 |---|---|
@@ -195,6 +257,6 @@ Coordina la validación humana y la ejecución de intervenciones en planta.
 | `Eventos` (disparo/convalecencia) | `falla_inicio_disparo`, `falla_estado_causa` |
 | Señales PLC (salida/monitoreo) | `codigo_alarma_plc` |
 
-> **Nota de implementación**: el repo (ARCHITECTURE.md, ADR 0002, DEVELOPMENT.md) dice explícitamente *"no crear modelos de negocio ni tablas hasta que el dataset y las decisiones estén validados"* y *"el esquema Prisma está intencionalmente vacío"*. La decisión de crear el schema (con este mapeo) corresponde a la **Fase 2/3 del roadmap** y debe acompañarse de la validación de las 🟡 en reunión.
+> **Nota:** la tabla de arriba pertenece al documento conceptual v1.0. El mapeo que usa Prisma está en [Implementación del MVP](#implementación-del-mvp). Los odómetros no viven en `Activo`. La migración y el seed siguen pendientes ([#15](../../issues/15), [#16](../../issues/16)).
 
 ---

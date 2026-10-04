@@ -2,11 +2,11 @@
 
 ## Current decision
 
-PredictiveMaintenance starts as a server-first modular monolith in one Next.js application. It has one deployable unit and one PostgreSQL database accessed through Prisma for identity, administration, audit, and machine presentation.
+PredictiveMaintenance starts as a server-first modular monolith in one Next.js application. It has one deployable unit and one PostgreSQL database accessed through Prisma for identity, administration, audit, machine presentation, and the MVP maintenance schema in [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md). Application modules do not read those maintenance tables yet, and the migration has not been created.
 
 The Python workspace under `ml/` is not a deployable unit. It is a local workspace for data preparation and modeling, and deploying any part of it is a change to this boundary.
 
-This is a boundary for the MVP, not a complete domain design. Identity and administration are explicitly approved in [ADR 0007](./adr/0007-identity-administration.md); the industrial domain and prediction integration still require their own data and product decisions.
+This is a boundary for the MVP, not a complete domain design. Identity and administration are explicitly approved in [ADR 0007](./adr/0007-identity-administration.md). The machine-hour persistence model is in [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md). How a prediction reaches the product, and the open product questions in `OPEN-QUESTIONS.md`, are still undecided.
 
 ```mermaid
 flowchart TD
@@ -80,7 +80,7 @@ El envío SMTP y el almacenamiento S3/R2 son adaptadores opcionales. Sin transpo
 
 `src/lib/db/prisma.ts` is server-only and creates a cached client lazily. This prevents hot reload from creating repeated pools while allowing the application to build and start without `DATABASE_URL`. A missing URL fails only when database access is requested.
 
-The schema contains identity, access, audit, and presentation models. It does not persist the industrial maintenance domain or convert dataset columns into product tables. Protected pages now need a configured database and bootstrap data even though lazy client initialization still allows database-independent paths such as `/api/health`.
+The schema contains identity, access, audit, presentation, and the MVP maintenance models (`Activo`, `LecturaMaquinaHora`, `PrediccionIA`, `EventoFalla`, `Alerta`, `RevisionAlerta`, `OrdenTrabajo`). Dataset targets and derived ML features are not columns. See [ADR 0008](./adr/0008-mvp-machine-hour-persistence.md) and [`DATA-MODEL.md`](./DATA-MODEL.md). Protected pages now need a configured database and bootstrap data even though lazy client initialization still allows database-independent paths such as `/api/health`. The maintenance migration is not created yet, so a database migrated only with the existing identity migrations does not have those tables.
 
 ## ML workspace (Python)
 

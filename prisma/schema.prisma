@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -28,22 +29,25 @@ enum ScopeType {
 }
 
 model User {
-  id                    String   @id @default(cuid())
-  name                  String
-  email                 String   @unique
-  avatarUrl             String?
-  theme                 Theme    @default(light)
-  status                UserStatus @default(INVITED)
-  passwordHash          String?
-  lastLoginAt           DateTime?
-  passwordChangedAt     DateTime?
-  mustChangePassword    Boolean  @default(false)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  disabledAt            DateTime?
-  sessions              Session[]
-  assignments           UserRoleAssignment[]
-  resetTokens           PasswordResetToken[]
+  id                 String               @id @default(cuid())
+  name               String
+  email              String               @unique
+  avatarUrl          String?
+  theme              Theme                @default(light)
+  status             UserStatus           @default(INVITED)
+  passwordHash       String?
+  lastLoginAt        DateTime?
+  passwordChangedAt  DateTime?
+  mustChangePassword Boolean              @default(false)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  disabledAt         DateTime?
+  sessions           Session[]
+  assignments        UserRoleAssignment[]
+  resetTokens        PasswordResetToken[]
+  alertasAsignadas   Alerta[]             @relation("AlertasAsignadas")
+  revisionesAlerta   RevisionAlerta[]     @relation("RevisionesAlerta")
+  ordenesAsignadas   OrdenTrabajo[]       @relation("OrdenesAsignadas")
 }
 
 model Session {
@@ -53,24 +57,25 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+
   @@index([userId])
   @@index([expiresAt])
 }
 
 model Role {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String               @id @default(cuid())
+  name        String               @unique
   description String?
-  isSystem    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isSystem    Boolean              @default(false)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
   permissions RolePermission[]
   assignments UserRoleAssignment[]
 }
 
 model Permission {
-  id    String @id @default(cuid())
-  key   String @unique
+  id    String           @id @default(cuid())
+  key   String           @unique
   roles RolePermission[]
 }
 
@@ -79,93 +84,99 @@ model RolePermission {
   permissionId String
   role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
   @@id([roleId, permissionId])
 }
 
 model UserRoleAssignment {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Restrict)
   roleId     String
-  role       Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  role       Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
   scopeType  ScopeType
   scopeRef   String?
   validFrom  DateTime?
   validUntil DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
   @@index([userId, scopeType, scopeRef])
   @@index([validUntil])
 }
 
 // Authorization references only. No sensor, telemetry, prediction, or maintenance data.
 model AccessResource {
-  id        String @id @default(cuid())
+  id        String           @id @default(cuid())
   scopeType ScopeType
   scopeRef  String
   name      String
   parentId  String?
-  parent    AccessResource? @relation("AccessHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  parent    AccessResource?  @relation("AccessHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children  AccessResource[] @relation("AccessHierarchy")
+
   @@unique([scopeType, scopeRef])
 }
 
 model Invitation {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   email           String
-  tokenHash       String   @unique
+  tokenHash       String    @unique
   expiresAt       DateTime
   acceptedAt      DateTime?
   createdByUserId String
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
+
   @@index([email])
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String   @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+
   @@index([userId])
 }
 
 model AuthRateLimit {
-  key       String   @id
-  attempts  Int      @default(1)
-  resetAt   DateTime
+  key      String   @id
+  attempts Int      @default(1)
+  resetAt  DateTime
 }
 
 model MachinePresentation {
-  id                  String   @id @default(cuid())
-  machineRef          String   @unique
+  id                  String         @id @default(cuid())
+  machineRef          String         @unique
   displayNameOverride String?
   shortDescription    String?
   updatedByUserId     String
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
   images              MachineImage[]
 }
 
 model MachineImage {
-  id                    String   @id @default(cuid())
+  id                    String              @id @default(cuid())
   machinePresentationId String
   presentation          MachinePresentation @relation(fields: [machinePresentationId], references: [id], onDelete: Cascade)
   url                   String
   alt                   String
-  isPrimary             Boolean  @default(false)
-  sortOrder             Int      @default(0)
+  isPrimary             Boolean             @default(false)
+  sortOrder             Int                 @default(0)
   mimeType              String?
   sizeBytes             Int?
-  createdByUserId        String
-  createdAt             DateTime @default(now())
+  createdByUserId       String
+  createdAt             DateTime            @default(now())
+
   @@index([machinePresentationId, sortOrder])
 }
 
 model AuditLog {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   actorUserId String?
   action      String
   entityType  String
@@ -176,7 +187,231 @@ model AuditLog {
   scopeRef    String?
   ipAddress   String?
   userAgent   String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
+
   @@index([createdAt])
   @@index([scopeType, scopeRef, createdAt])
+}
+
+// -----------------------------------------------------------------------------
+// Dominio de mantenimiento predictivo — MVP
+// Convención de los modelos nuevos: nombres en español y columnas snake_case.
+// La identidad existente queda en inglés. Decisión en docs/adr/0008-mvp-machine-hour-persistence.md.
+// No se persisten targets ni features derivadas del dataset.
+// -----------------------------------------------------------------------------
+
+enum Criticidad {
+  ALTA
+  MEDIA
+  BAJA
+}
+
+enum EstadoSalud {
+  NORMAL
+  BAJO_OBSERVACION
+  RIESGO_CRITICO
+  PARADA_MANTENIMIENTO
+}
+
+enum AlertaEstado {
+  ABIERTA
+  EN_EVALUACION
+  PLANIFICADA
+  EN_EJECUCION
+  CERRADA
+}
+
+enum AlertaResultado {
+  CORRECTA
+  FALSO_POSITIVO
+  DESCARTADA
+}
+
+enum DecisionRevisionAlerta {
+  VALIDADA
+  CORREGIDA
+  DESCARTADA
+}
+
+enum OrdenEstado {
+  PENDIENTE_REVISION_HUMANA
+  APROBADA
+  RECHAZADA
+  EN_EJECUCION
+  COMPLETADA
+}
+
+enum OrdenPrioridad {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum CausaFalla {
+  FALLO_RODAMIENTO
+  FALLO_MOTOR_TERMICO
+  FALLO_PRESION_BOMBA
+  OTRO
+}
+
+/// Datos relativamente estables del activo.
+/// Los odómetros no viven aquí porque cambian por hora.
+model Activo {
+  id                  String               @id @default(cuid())
+  codigoIdentificador String               @unique @map("codigo_identificador")
+  nombre              String?
+  tipoEquipo          String               @map("tipo_equipo")
+  modelo              String
+  marca               String
+  lineaProduccion     String               @map("linea_produccion")
+  antiguedadAnos      Int                  @map("antiguedad_anos")
+  criticidad          Criticidad
+  costoParadaHoraUsd  Int                  @map("costo_parada_hora_usd")
+  potenciaNominalKw   Float                @map("potencia_nominal_kw")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  lecturas            LecturaMaquinaHora[]
+  predicciones        PrediccionIA[]
+  eventosFalla        EventoFalla[]
+  alertas             Alerta[]
+  ordenesTrabajo      OrdenTrabajo[]
+
+  @@index([criticidad])
+  @@index([lineaProduccion])
+  @@map("activos")
+}
+
+/// Una fila = una máquina en una hora.
+/// Un sensor nulo conserva el faltante. No convertir un faltante a 0.
+model LecturaMaquinaHora {
+  id                            String         @id @default(cuid())
+  activoId                      String         @map("id_activo")
+  fechaHora                     DateTime       @map("fecha_hora") @db.Timestamptz(3)
+  estadoOperativo               Boolean        @map("estado_operativo")
+  cargaPct                      Float?         @map("carga_pct")
+  velocidadRpm                  Float?         @map("velocidad_rpm")
+  voltajeV                      Float?         @map("voltaje_v")
+  corrienteA                    Float?         @map("corriente_a")
+  potenciaConsumidaKw           Float?         @map("potencia_consumida_kw")
+  temperaturaC                  Float?         @map("temperatura_c")
+  vibracionMms                  Float?         @map("vibracion_mms")
+  presionBar                    Float?         @map("presion_bar")
+  horasOperacionTotales         Int            @map("horas_operacion_totales")
+  ciclosAcumulados              Int            @map("ciclos_acumulados")
+  horasDesdeUltimoMantenimiento Int            @map("horas_desde_ultimo_mantenimiento")
+  conteoFallasPrevias           Int            @map("conteo_fallas_previas")
+  activo                        Activo         @relation(fields: [activoId], references: [id], onDelete: Restrict)
+  predicciones                  PrediccionIA[] @relation("LecturaReferenciaPrediccion")
+
+  @@unique([activoId, fechaHora])
+  @@unique([id, activoId])
+  @@index([activoId, fechaHora])
+  @@index([fechaHora])
+  @@map("lecturas_maquina_hora")
+}
+
+/// Inferencia real del modelo. No guarda target_* del dataset.
+/// estadoSaludSugerido es opcional: POST /api/v1/predict/falla no lo devuelve.
+/// La lectura de referencia debe ser del mismo activo (FK compuesta con activoId).
+model PrediccionIA {
+  id                    String              @id @default(cuid())
+  activoId              String              @map("id_activo")
+  lecturaReferenciaId   String?             @map("id_lectura_referencia")
+  fechaCalculo          DateTime            @default(now()) @map("fecha_calculo") @db.Timestamptz(3)
+  versionModelo         String              @map("version_modelo")
+  fallaPredicha48h      Boolean             @map("falla_predicha_48h")
+  probabilidadFalla48h  Float               @map("probabilidad_falla_48h")
+  estadoSaludSugerido   EstadoSalud?        @map("estado_salud_sugerido")
+  umbralAlerta          Float?              @map("umbral_alerta")
+  variablesExplicativas Json?               @map("variables_explicativas")
+  activo                Activo              @relation(fields: [activoId], references: [id], onDelete: Restrict)
+  lecturaReferencia     LecturaMaquinaHora? @relation("LecturaReferenciaPrediccion", fields: [lecturaReferenciaId, activoId], references: [id, activoId], onDelete: Restrict)
+  alerta                Alerta?
+
+  @@unique([id, activoId])
+  @@index([activoId, fechaCalculo])
+  @@index([lecturaReferenciaId])
+  @@map("predicciones_ia")
+}
+
+/// Hecho real de falla, distinto de una predicción.
+/// Se construye desde falla_inicio_disparo y falla_estado_causa.
+model EventoFalla {
+  id          String      @id @default(cuid())
+  activoId    String      @map("id_activo")
+  triggeredAt DateTime    @map("triggered_at") @db.Timestamptz(3)
+  causa       CausaFalla?
+  repairEndAt DateTime?   @map("repair_end_at") @db.Timestamptz(3)
+  activo      Activo      @relation(fields: [activoId], references: [id], onDelete: Restrict)
+
+  @@unique([activoId, triggeredAt])
+  @@index([activoId, triggeredAt])
+  @@map("eventos_falla")
+}
+
+/// Caso operativo. closedAt nulo significa alerta activa.
+/// El índice parcial impide más de una alerta activa por activo.
+/// La predicción debe ser del mismo activo (FK compuesta con activoId).
+model Alerta {
+  id                 String           @id @default(cuid())
+  activoId           String           @map("id_activo")
+  prediccionId       String           @unique @map("id_prediccion")
+  estado             AlertaEstado     @default(ABIERTA)
+  resultado          AlertaResultado?
+  prioridad          OrdenPrioridad
+  asignadaAUsuarioId String?          @map("asignada_a_usuario_id")
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  closedAt           DateTime?        @map("closed_at") @db.Timestamptz(3)
+  activo             Activo           @relation(fields: [activoId], references: [id], onDelete: Restrict)
+  prediccion         PrediccionIA     @relation(fields: [prediccionId, activoId], references: [id, activoId], onDelete: Restrict)
+  asignadaA          User?            @relation("AlertasAsignadas", fields: [asignadaAUsuarioId], references: [id], onDelete: Restrict)
+  revisiones         RevisionAlerta[]
+  ordenTrabajo       OrdenTrabajo?
+
+  @@unique([activoId], map: "uq_alerta_activa_por_activo", where: { closedAt: null })
+  @@unique([id, activoId])
+  @@unique([prediccionId, activoId])
+  @@index([activoId, estado])
+  @@index([asignadaAUsuarioId, estado])
+  @@map("alertas")
+}
+
+/// Decisión humana sobre una alerta, exista o no una orden de trabajo.
+model RevisionAlerta {
+  id        String                 @id @default(cuid())
+  alertaId  String                 @map("id_alerta")
+  usuarioId String                 @map("id_usuario")
+  decision  DecisionRevisionAlerta
+  motivo    String
+  createdAt DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  alerta    Alerta                 @relation(fields: [alertaId], references: [id], onDelete: Restrict)
+  usuario   User                   @relation("RevisionesAlerta", fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@index([alertaId, createdAt])
+  @@index([usuarioId, createdAt])
+  @@map("revisiones_alerta")
+}
+
+/// Intervención operativa. Opcional respecto de una alerta o una revisión.
+/// Si tiene alerta, debe ser del mismo activo (FK compuesta con activoId).
+model OrdenTrabajo {
+  id                 String         @id @default(cuid())
+  activoId           String         @map("id_activo")
+  alertaId           String?        @unique @map("id_alerta")
+  tipoAccionSugerida String         @map("tipo_accion_sugerida")
+  prioridad          OrdenPrioridad
+  estadoOrden        OrdenEstado    @default(PENDIENTE_REVISION_HUMANA) @map("estado_orden")
+  tecnicoAsignadoId  String?        @map("tecnico_asignado_id")
+  notas              String?
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  closedAt           DateTime?      @map("closed_at") @db.Timestamptz(3)
+  activo             Activo         @relation(fields: [activoId], references: [id], onDelete: Restrict)
+  alerta             Alerta?        @relation(fields: [alertaId, activoId], references: [id, activoId], onDelete: Restrict)
+  tecnicoAsignado    User?          @relation("OrdenesAsignadas", fields: [tecnicoAsignadoId], references: [id], onDelete: Restrict)
+
+  @@unique([alertaId, activoId])
+  @@index([activoId, estadoOrden])
+  @@index([tecnicoAsignadoId, estadoOrden])
+  @@map("ordenes_trabajo")
 }

@@ -2,7 +2,7 @@
 
 ## Status
 
-Aceptado — 2026-09-03.
+Aceptado — 2026-09-03. La consecuencia que aplazaba los modelos de negocio quedó reemplazada, para el dominio del MVP, por [ADR 0008](./0008-mvp-machine-hour-persistence.md). PostgreSQL y Prisma siguen vigentes.
 
 ## Context
 
@@ -17,6 +17,7 @@ Usar PostgreSQL como base de datos y Prisma para esquema, migraciones y acceso t
 - El esquema y sus cambios quedan versionados y validados.
 - La aplicación depende de Prisma para el acceso habitual; SQL directo queda reservado para una necesidad demostrada.
 - Prisma no se usa desde componentes de UI.
+- El aplazamiento de modelos de negocio quedó reemplazado, para el dominio del MVP, por [ADR 0008](./0008-mvp-machine-hour-persistence.md). PostgreSQL y Prisma no cambian.
 
 ## Alternatives considered
 
