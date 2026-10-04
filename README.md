@@ -1,8 +1,8 @@
-# PredictiveMaintenance
+# 🤖📈 PredictiveMaintenance 🏭🔧
 
 Technical foundation for an industrial maintenance support application. The intended MVP will help maintenance teams identify machines showing deterioration signals, understand the variables involved, and decide what to inspect first.
 
-La promesa predictiva todavía requiere validación con los datos. La aplicación incluye un dashboard con datos simulados, detalle de equipos, autenticación y un backoffice de usuarios, roles, accesos, auditoría y presentación. El workspace `ml/` contiene experimentos y un prototipo de inferencia que todavía no se integra con la aplicación.
+The predictive promise still requires validation against the available data. The application currently includes a dashboard with simulated data, equipment details, authentication, and a back office for user management, roles, access control, auditing, and presentation management. The `ml/` workspace contains experiments and an inference prototype that are not yet integrated with the application.
 
 ## Current state
 
@@ -61,7 +61,15 @@ cp .env.example .env
 Copy-Item .env.example .env
 ```
 
-Para el primer inicio, configurar en el `.env` ignorado las variables `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME` y una contraseña de entre 12 y 128 caracteres en `BOOTSTRAP_ADMIN_PASSWORD`, tomando los nombres de `.env.example`. No usar una contraseña de ejemplo ni incluir credenciales en comandos, commits o documentación. Luego preparar la base y arrancar la aplicación:
+For the first startup, configure the following variables in the ignored `.env` file, using `.env.example` as a reference:
+
+* `BOOTSTRAP_ADMIN_EMAIL`
+* `BOOTSTRAP_ADMIN_NAME`
+* `BOOTSTRAP_ADMIN_PASSWORD` — a password between 12 and 128 characters
+
+Do not use an example password or include credentials in commands, commits, or documentation.
+
+Then, prepare the database and start the application:
 
 ```bash
 npm run db:up
@@ -70,15 +78,27 @@ npm run db:seed
 npm run dev
 ```
 
-El seed crea el administrador inicial sólo si su email no existe y exige cambiar la contraseña en el primer ingreso. Después del bootstrap, retirar las variables `BOOTSTRAP_ADMIN_*` de la configuración local. Las ejecuciones siguientes conservan cuentas y permisos existentes; `npm run dev:full` permite iniciar PostgreSQL y Next.js juntos cuando la base ya está preparada.
+The seed creates the initial administrator only if the email does not already exist and requires the administrator to change the password on first login.
 
-Abrir `http://127.0.0.1:3000`, coincidente con `APP_URL`, y comprobar `http://127.0.0.1:3000/api/health`. El dashboard y el backoffice requieren base de datos; el health endpoint sigue siendo independiente. `npm run dev` inicia solamente Next.js para usar una base ya disponible. El setup completo y la particularidad de conexión de Prisma en Windows están en [DEVELOPMENT.md](docs/DEVELOPMENT.md).
+After the bootstrap process, remove the `BOOTSTRAP_ADMIN_*` variables from your local configuration. Subsequent runs preserve existing accounts and permissions. When the database is already prepared, `npm run dev:full` can be used to start PostgreSQL and Next.js together.
+
+Open `http://127.0.0.1:3000`, which matches `APP_URL`, and verify the health endpoint at `http://127.0.0.1:3000/api/health`.
+
+The dashboard and back office require a database connection, while the health endpoint remains independent. `npm run dev` starts only Next.js and can be used when a database is already available.
+
+For the complete setup instructions, including the Prisma connection considerations on Windows, see [DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Environment variables
 
 `DATABASE_URL` is required for the bundled PostgreSQL workflow. `.env.example` already matches the local Compose service; copy it without placing real credentials in the repository. An external PostgreSQL URL can be used without Docker by starting the app with `npm run dev`.
 
-`APP_URL` establece el origen de los enlaces de acceso y debe usar HTTPS en producción. SMTP se configura mediante variables del servidor; las claves locales pueden guardarse en `.env.local`, ignorado por Git y cargado por Next.js. La carga de imágenes en S3/R2 es opcional: sin proveedor configurado se admiten URLs externas validadas. Ver [AUTH-ADMIN.md](docs/AUTH-ADMIN.md) para configuración, límites y evidencia de validación local.
+`APP_URL` defines the origin used for access links and must use HTTPS in production.
+
+SMTP is configured through server-side environment variables. Local credentials can be stored in `.env.local`, which is ignored by Git and automatically loaded by Next.js.
+
+Image uploads to S3/R2 are optional. If no storage provider is configured, validated external URLs can be used instead.
+
+See [AUTH-ADMIN.md](docs/AUTH-ADMIN.md) for configuration details, limits, and evidence from local validation.
 
 ## Scripts
 
@@ -102,7 +122,11 @@ Abrir `http://127.0.0.1:3000`, coincidente con `APP_URL`, y comprobar `http://12
 | `npm run db:seed` | Seed permissions, system roles, machine references, and an optional initial administrator |
 | `npm run db:studio` | Open Prisma Studio |
 
-`npm run test:integration` requiere PostgreSQL en `127.0.0.1` y la base dedicada `predictive_maintenance_e2e` previamente migrada y con el seed de catálogo aplicado. El runner fuerza ese nombre terminado en `_e2e`, conserva fixtures sintéticos en `.cache/` y deshabilita SMTP; no forma parte de `npm test`. Ver [pruebas de integración locales](docs/DEVELOPMENT.md#pruebas-de-integración-locales).
+`npm run test:integration` requires PostgreSQL running on `127.0.0.1` and the dedicated `predictive_maintenance_e2e` database to be migrated and seeded with the catalog data.
+
+The test runner enforces the `_e2e` database suffix, keeps synthetic fixtures in `.cache/`, and disables SMTP. These tests are not part of `npm test`.
+
+See [Local integration tests](docs/DEVELOPMENT.md#pruebas-de-integración-locales) for more details.
 
 ## Structure
 
@@ -160,6 +184,18 @@ npm run build
 
 Use atomic Conventional Commits in the form `<type>(<scope>): <imperative lowercase description>`.
 
-## Decisions needed next
+## Project Limitations and Open Questions
 
-The first blockers are the machine family, exact failure definition and target, real dataset, available sensors and sampling frequency, label quality, useful prediction horizon, output type, criticality rules, maintenance response, and measurable MVP success. See `docs/OPEN-QUESTIONS.md` before implementing domain behavior or tables.
+The initial blockers were the machine family, exact failure definition and target, real dataset, available sensors and sampling frequency, label quality, useful prediction horizon, output type, criticality rules, maintenance response, and measurable MVP success. See `docs/OPEN-QUESTIONS.md` for the questions that needed to be addressed before implementing domain behavior or database tables.
+
+## Team
+
+This project was developed collaboratively using the Agile Scrum methodology within the No Country environment (S08-26-equipo-37).
+
+The team consisted of:
+
+* **Héctor Medina Rodríguez** — Project Manager & Data Analyst
+* **Sebastian Macaya** — Software Engineer
+* **Pedro L. Acosta Pérez** — Data Analyst & Project Manager
+* **Flavio Taya Ramos** — Machine Learning Engineer
+* **Diego Borges Salces** — Backend Developer
