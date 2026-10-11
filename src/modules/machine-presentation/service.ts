@@ -6,6 +6,7 @@ import { machines } from "@/features/maintenance/mock-data";
 import { audit } from "@/modules/identity/audit";
 import { getActor } from "@/modules/identity/auth";
 import type { Db } from "@/modules/identity/db";
+import { DEMO_READ_ONLY_MESSAGE } from "@/modules/identity/demo";
 import { can, type Actor } from "@/modules/identity/policy";
 import { getResourceContext } from "@/modules/identity/resources";
 import { getStorageAvailability, storeImage } from "./storage";
@@ -84,6 +85,7 @@ export async function getAdminMachine(actor: Actor, rawRef: unknown) {
 async function requireMachinePermission(db: Db, actor: Actor, machineRef: string, permission: string) {
   if (!machines.some((machine) => machine.id === machineRef)) throw new PresentationError("El equipo no está disponible.");
   const fresh = await getActor(db, actor.id);
+  if (fresh.readOnly) throw new PresentationError(DEMO_READ_ONLY_MESSAGE);
   const context = await getResourceContext("MACHINE", machineRef, db);
   if (!can(fresh, "machines.view", context) || !can(fresh, permission, context)) {
     throw new PresentationError("No tenés permiso para modificar la presentación de este equipo.");

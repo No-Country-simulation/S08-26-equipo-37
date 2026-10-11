@@ -4,6 +4,19 @@ Technical foundation for an industrial maintenance support application. The inte
 
 The predictive promise still requires validation against the available data. The application currently includes a dashboard with simulated data, equipment details, authentication, and a back office for user management, roles, access control, auditing, and presentation management. The `ml/` workspace contains experiments and an inference prototype that are not yet integrated with the application.
 
+## Public read-only demo
+
+The simulation has ended. The application is being frozen as a presentation demo at [predictive-maintenance.smacaya.tech](https://predictive-maintenance.smacaya.tech).
+
+| Account | Public password | Appearance |
+| --- | --- | --- |
+| `demo.light@example.com` | `DemoMaintenance2026!` | Light |
+| `demo.dark@example.com` | `DemoMaintenance2026!` | Dark |
+
+These are intentionally public demonstration accounts. They can browse the simulated dashboard and equipment; they cannot change data, appearance, passwords, users, roles, or images. Demo login, browsing, and logout do not write to the database. The existing owner, `impulseguarddev@gmail.com`, retains administrative access; owner authentication and recovery still persist their security throttles. Previous team accounts are suspended by the freeze operation.
+
+**Rollout status (2026-10-11):** deployment and public-account verification are pending. The GitHub CI workflow has been temporarily disabled to stop its deployment trigger. See [ADR 0009](docs/adr/0009-frozen-public-demo.md) for the freeze procedure and operational evidence.
+
 ## Current state
 
 - Next.js full-stack application using the App Router
@@ -150,9 +163,9 @@ Identity and presentation models are defined in [ADR 0007](docs/adr/0007-identit
 
 ## CI and deployment
 
-GitHub Actions runs installation, tests, lint, typecheck, and build on pull requests and relevant pushes. A successful push to `main` then triggers Coolify; deployment secrets remain in GitHub, never in this repository.
+The CI definition runs installation, tests, lint, typecheck, build, and ML contract checks. It has no deployment job. Coolify must be deployed manually from the frozen commit, with automatic deployment disabled. A push to `main` must not update the presentation demo.
 
-Deployment target: `https://predictive-maintenance.smacaya.tech`.
+Deployment target: [predictive-maintenance.smacaya.tech](https://predictive-maintenance.smacaya.tech). Current rollout evidence is recorded in [ADR 0009](docs/adr/0009-frozen-public-demo.md).
 
 ## Documentation
 

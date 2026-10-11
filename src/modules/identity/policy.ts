@@ -25,6 +25,7 @@ export interface Actor {
   id: string;
   status: string;
   mustChangePassword: boolean;
+  readOnly?: boolean;
   assignments: readonly Assignment[];
 }
 
@@ -90,6 +91,10 @@ function grants(assignment: Assignment, permission: string, now: Date): boolean 
   );
 }
 
+function allowedInDemo(actor: Actor, permission: string): boolean {
+  return !actor.readOnly || ["dashboard.view", "machines.list", "machines.view", "alerts.view", "activity.view"].includes(permission);
+}
+
 export function can(
   actor: Actor | null,
   permission: string,
@@ -98,6 +103,7 @@ export function can(
 ): boolean {
   return (
     activeActor(actor) &&
+    allowedInDemo(actor, permission) &&
     actor.assignments.some(
       (assignment) => grants(assignment, permission, now) && scopeMatches(assignment, resource),
     )
@@ -112,6 +118,7 @@ export function hasAnyPermission(
 ): boolean {
   return (
     activeActor(actor) &&
+    allowedInDemo(actor, permission) &&
     actor.assignments.some((assignment) => {
       const context =
         assignment.scopeType === "GLOBAL"
@@ -129,7 +136,7 @@ export function canDelegate(
   context: ResourceContext,
   now: Date = new Date(),
 ): boolean {
-  if (!activeActor(actor) || !scopeMatches(requested, context)) return false;
+  if (!activeActor(actor) || actor.readOnly || !scopeMatches(requested, context)) return false;
   const [start, end] = bounds(requested);
   if (!(start < end) || !(end > now.getTime())) return false;
 

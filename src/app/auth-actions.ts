@@ -8,11 +8,12 @@ import type { AccountFormState } from "./_components/account-form";
 import { createSession, destroySession, requireAuthenticatedUser } from "@/modules/identity/auth";
 import { authenticate, changePassword, consumeAccountToken, requestPasswordReset, updateThemePreference } from "@/modules/identity/service";
 import { sendAccountMail } from "@/modules/identity/mail";
+import { DEMO_READ_ONLY_MESSAGE } from "@/modules/identity/demo";
 
 function controlledError(error: unknown): AccountFormState {
   unstable_rethrow(error);
   if (error instanceof ZodError) return { error: "Revisá los datos. La contraseña nueva requiere entre 12 y 128 caracteres." };
-  const allowed = ["Demasiados intentos. Esperá 15 minutos.", "Email o contraseña incorrectos.", "El enlace venció o ya fue utilizado.", "El enlace ya fue utilizado.", "La invitación ya no está disponible.", "Elegí una contraseña diferente de la actual.", "La contraseña actual es incorrecta."];
+  const allowed = [DEMO_READ_ONLY_MESSAGE, "Demasiados intentos. Esperá 15 minutos.", "Email o contraseña incorrectos.", "El enlace venció o ya fue utilizado.", "El enlace ya fue utilizado.", "La invitación ya no está disponible.", "Elegí una contraseña diferente de la actual.", "La contraseña actual es incorrecta."];
   return { error: error instanceof Error && allowed.includes(error.message) ? error.message : "No se pudo completar la operación. Volvé a intentarlo." };
 }
 
@@ -36,7 +37,7 @@ export async function updateThemeAction(_state: AccountFormState, form: FormData
   try { await updateThemePreference(user.id, form.get("theme")); }
   catch (error) {
     unstable_rethrow(error);
-    return { error: error instanceof ZodError ? "Elegí el tema claro u oscuro." : "No se pudo guardar la preferencia. Volvé a intentarlo." };
+    return { error: error instanceof ZodError ? "Elegí el tema claro u oscuro." : error instanceof Error && error.message === DEMO_READ_ONLY_MESSAGE ? error.message : "No se pudo guardar la preferencia. Volvé a intentarlo." };
   }
   revalidatePath("/", "layout");
   return { success: "Preferencia de apariencia guardada." };

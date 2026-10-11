@@ -6,8 +6,7 @@ Identity, authorization, and administrative audit now have an explicit scope in 
 
 - Store secrets only in environment variables or the deployment platform's secret store.
 - Never commit `.env`, `.env.local`, database credentials, API keys, deploy webhooks, or tokens.
-- Keep `COOLIFY_DEPLOY_WEBHOOK` and `COOLIFY_TOKEN` in GitHub Actions secrets.
-- Keep `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET` in GitHub Actions secrets.
+- The frozen demo has no GitHub Actions deployment job. Its four repository deployment secrets were removed on 2026-10-11; shared provider credentials were left unchanged.
 - Never expose server variables through `NEXT_PUBLIC_*` unless their disclosure is intentional.
 - SMTP and object-storage credentials are server-only secrets. Do not paste invitation/reset links or bootstrap passwords into logs, issues, or screenshots. Do not rotate a mailbox password shared with another product without coordinating that change.
 
@@ -19,6 +18,10 @@ Identity, authorization, and administrative audit now have an explicit scope in 
 - Collect and retain only data required for an agreed product outcome.
 
 ## Identidad y autorización
+
+El cierre de la simulación se define en [ADR 0009](./adr/0009-frozen-public-demo.md). Con `DEMO_OWNER_EMAIL` activo, sólo el propietario conserva escritura. Las dos cuentas de demostración y su contraseña son públicas por diseño; no son credenciales de administración ni de base de datos. `pm_demo` sólo selecciona una identidad pública fija, validada en servidor y limitada a los permisos de lectura aun si recibe asignaciones más amplias. Las cuentas demo tienen `passwordHash = null` y no pueden usar la contraseña publicada cuando el modo está desactivado.
+
+El login, navegación y logout de las cuentas demo no escriben en PostgreSQL; esas cuentas tampoco pueden cambiar sus contraseñas o preferencias, consumir enlaces de cuenta ni ejecutar mutaciones de administración o presentación. Los intentos de autenticación y recuperación dirigidos a la cuenta propietaria conservan los límites de intentos persistidos, también cuando fallan. El propietario mantiene su autenticación normal y sus escrituras. Por eso la conexión PostgreSQL sigue permitiendo las operaciones del propietario: esta entrega no equivale a una base globalmente de lectura ni sustituye la protección de credenciales y acceso directo al servidor.
 
 Las contraseñas se derivan con `scrypt` de Node.js y sal aleatoria. La aplicación conserva hashes de tokens de sesión, invitación y recuperación, no los tokens originales. La cookie de sesión es `HttpOnly` y `SameSite=Lax`; producción debe usar `APP_URL` HTTPS para activar `Secure`. Las sesiones vencen y el cambio de contraseña invalida las previas. Una cuenta suspendida o pendiente de activación no obtiene acceso operativo.
 
@@ -42,7 +45,7 @@ Use a dedicated PostgreSQL role with the least privileges required by the applic
 
 - Commit the lockfile and use `npm ci` in CI and deployments.
 - Review dependency advisories and update deliberately; do not apply breaking automated fixes without validation.
-- CI must pass tests, lint, typecheck, and build before it can trigger deployment.
+- CI validates changes without triggering deployment. Deploy the frozen commit manually only after tests, lint, typecheck, and build pass.
 - Keep deploy tokens scoped to deployment and rotate them if exposed.
 
 ## ML prototype (`ml/api`)

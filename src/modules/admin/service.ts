@@ -8,6 +8,7 @@ import { getActor, publicUserSelect, requireAuthenticatedUser, type CurrentUser 
 import { audit } from "@/modules/identity/audit";
 import { PERMISSIONS } from "@/modules/identity/catalog";
 import type { Db } from "@/modules/identity/db";
+import { canModifyAccount, DEMO_READ_ONLY_MESSAGE, getDemoConfig } from "@/modules/identity/demo";
 import { sendAccountMail } from "@/modules/identity/mail";
 import { assignmentState, can, canDelegate, hasAnyPermission, scopeMatches, type Actor, type ResourceContext, type ScopeType } from "@/modules/identity/policy";
 import { getResourceContext, listResources } from "@/modules/identity/resources";
@@ -99,6 +100,7 @@ function assignmentSnapshot(assignment: { userId: string; roleId: string; scopeT
 async function assertGlobalAdminRemains(db: Db) {
   const users = await db.user.findMany({ where: { status: "ACTIVE", mustChangePassword: false }, select: publicUserSelect });
   const hasAdministrator = users.some((user) => {
+    if (!canModifyAccount(user.email)) return false;
     const permanent = { ...user, assignments: user.assignments.filter((assignment) => assignment.scopeType === "GLOBAL" && assignment.validUntil === null) };
     return PERMISSIONS.every((key) => can(permanent, key));
   });
@@ -108,6 +110,7 @@ async function assertGlobalAdminRemains(db: Db) {
 async function transaction<T>(actorId: string, work: (db: Db, actor: CurrentUser) => Promise<T>) {
   return getPrisma().$transaction(async (db) => {
     const actor = await getActor(db, actorId);
+    if (actor.readOnly) throw new AdminError(DEMO_READ_ONLY_MESSAGE);
     if (actor.mustChangePassword) throw new AdminError("Primero completá el cambio de contraseña requerido.");
     return work(db, actor);
   }, { isolationLevel: "Serializable" });
@@ -195,6 +198,7 @@ export async function updateUser(actorId: string, input: unknown): Promise<Admin
     const before = await targetUser(actor, data.userId, "users.update", db, true);
     const after = await db.user.update({ where: { id: before.id }, data: { name: data.name, email: data.email, avatarUrl: data.avatarUrl }, select: publicUserSelect });
     if (before.email !== after.email) {
+      if (getDemoConfig()) await assertGlobalAdminRemains(db);
       await db.session.deleteMany({ where: { userId: before.id } });
       await db.passwordResetToken.deleteMany({ where: { userId: before.id, usedAt: null } });
       await db.invitation.deleteMany({ where: { email: before.email, acceptedAt: null } });
