@@ -2,7 +2,7 @@
 
 ## Estado
 
-Aceptado — 2026-10-11, por solicitud explícita del propietario. Despliegue y comprobación de las cuentas públicas pendientes de la evidencia operativa de esta entrega.
+Aceptado y aplicado — 2026-10-11, por solicitud explícita del propietario. Despliegue manual, cierre de cuentas y comprobación de ambas cuentas públicas completados.
 
 ## Contexto
 
@@ -49,10 +49,16 @@ La selección pública por cookie permite una demo pequeña sin sesiones persist
 
 ## Evidencia operativa — 2026-10-11
 
-- GitHub: workflow `CI`, id `349549804`, deshabilitado temporalmente mediante API; estado confirmado `disabled_manually`. No había ejecuciones CI en curso al deshabilitarlo. El commit de esta entrega elimina el job `deploy`.
+- GitHub: workflow `CI`, id `349549804`, activo después de deshabilitarlo temporalmente durante el cierre. El job `deploy` fue eliminado. La [PR #66](https://github.com/No-Country-simulation/S08-26-equipo-37/pull/66) se integró por squash después de aprobar `validate`, `ml-contract`, `dependency-review`, `pr-title` y CodeQL. El push a `main` también aprobó `validate` y `ml-contract` sin job de despliegue.
 - Secretos de despliegue del repositorio eliminados y listado vacío verificado: `COOLIFY_DEPLOY_WEBHOOK`, `COOLIFY_TOKEN`, `CF_ACCESS_CLIENT_ID` y `CF_ACCESS_CLIENT_SECRET`. No se conservaron sus valores ni se revocaron credenciales globales compartidas.
 - Token dedicado de Coolify «GitHub Actions deploy - PredictiveMaintenance»: revocado antes del despliegue; su eliminación del listado quedó verificada. El token de otro producto se preservó.
-- Backup PostgreSQL: operación completada en el host por Coolify; tamaño informado 33,32 KB. No se acredita una restauración de prueba.
-- PostgreSQL: límite configurado de 256 MiB y 0,5 CPU; `max_connections=20`, `shared_buffers=32MB`, `work_mem=2MB`, `maintenance_work_mem=32MB` y `effective_cache_size=128MB`. Reinicio completado satisfactoriamente.
-- Aplicación: límite configurado de 512 MiB y 0,5 CPU; pool PostgreSQL de cinco conexiones; comando de inicio `npm run start`. Aplicación de los límites y comprobación de salud pendientes del despliegue.
-- Pendiente: commit/tag definitivo, aplicación del cierre de cuentas en PostgreSQL, despliegue manual, cuentas públicas verificadas, límites efectivos de la aplicación y estado final de CI. No hay métricas de consumo habilitadas para acreditar que los límites sean el mínimo posible.
+- Backup PostgreSQL: copia conservada en el host de Coolify y descargada localmente en Descargas; 34.119 bytes y cabecera `PGDMP` verificados. SHA-256: `B5A6125D5B75987A68593A2E4F4D75448C773873291D42D4814756A7F2E3979B`. El archivo permanece fuera del repositorio. No se realizó una restauración de prueba.
+- PostgreSQL: límites efectivos de 256 MiB y 0,5 CPU verificados en cgroups (`memory.max=268435456`, `cpu.max=50000 100000`); reinicio satisfactorio. `max_connections=20` y `shared_buffers=32MB` verificados con `SHOW`; también se configuraron `work_mem=2MB`, `maintenance_work_mem=32MB` y `effective_cache_size=128MB`.
+- Aplicación: límites efectivos de 512 MiB y 0,5 CPU verificados en cgroups (`memory.max=536870912`, `cpu.max=50000 100000`); pool PostgreSQL de cinco conexiones; comando de inicio `npm run start`.
+- Coolify quedó fijado al commit `6d9fb01814d2ea12d36c6acf9ff05d0e75efc008`. El despliegue manual `v8lvgc5zwlayyp3unv4ruvse` comenzó el 2026-10-11 a las 20:08:36 de Argentina (23:08:36 UTC), terminó con estado `Success` y duró 5 minutos 53 segundos.
+- El tag anotado [v0.1.0-demo-2026-10-11](https://github.com/No-Country-simulation/S08-26-equipo-37/tree/v0.1.0-demo-2026-10-11) se publicó y se verificó que apunta a ese mismo commit servido. Esta evidencia posterior se conserva en una actualización exclusivamente documental; no cambia la versión desplegada.
+- `freeze-demo.ts`: previsualización satisfactoria a las 20:15:09 y aplicación satisfactoria a las 20:15:37 de Argentina. Se suspendieron cuatro cuentas anteriores, vencieron cuatro asignaciones y revocaron seis sesiones; se crearon las dos cuentas demo. La transacción comprobó y preservó la identidad activa del propietario y su `SUPER_ADMIN` global ilimitado; no se realizó un ingreso interactivo con su contraseña.
+- Navegador: ambas demos completaron login y logout. La cuenta clara mostró ocho equipos, detalle de `M-01`, perfil `VIEWER GLOBAL` de lectura y denegación de `/admin` mediante `/forbidden`. La oscura mostró dashboard e inventario de ocho equipos y perfil de lectura. Se conservaron capturas de ambas apariencias.
+- Ausencia de escrituras durante ese recorrido: comparación programática de `n_tup_ins`, `n_tup_upd` y `n_tup_del` en las 14 tablas entre las 20:16:21 y 20:18:03 de Argentina; resultado `changedTables=[]`. Esto acredita esos recorridos públicos, sin incluir las operaciones normales del propietario.
+- Coolify: «Manual deployments only» vuelto a verificar después del despliegue. La tarea operativa quedó deshabilitada y con el comando de previsualización sin `--apply`; no hay ejecución automática del cierre.
+- Límites de la verificación: no se probó restaurar el backup ni ingresar interactivamente con la contraseña del propietario. No hay métricas de consumo habilitadas para acreditar que los límites de recursos sean el mínimo posible.
