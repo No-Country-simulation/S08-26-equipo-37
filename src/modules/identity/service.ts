@@ -4,14 +4,23 @@ import { getPrisma } from "@/lib/db/prisma";
 import { hashPassword, hashToken, verifyPassword } from "./crypto";
 import { audit } from "./audit";
 import { issuePasswordReset } from "./tokens";
+import { assertAccountWritable, canAccessDemo, canModifyAccount, demoAccount, DEMO_PASSWORD, getDemoConfig } from "./demo";
 
 export const emailSchema = z.email().trim().toLowerCase().max(254);
 export const passwordSchema = z.string().min(12, "Usá al menos 12 caracteres.").max(128, "Máximo 128 caracteres.");
 export const tokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
 const dummyHash = `scrypt-v1$${"0".repeat(32)}$${"0".repeat(128)}`;
 
+async function assertUserWritable(userId: string): Promise<void> {
+  if (!getDemoConfig()) return;
+  const user = await getPrisma().user.findUnique({ where: { id: userId }, select: { email: true } });
+  if (!user) throw new Error("La sesión ya no está habilitada.");
+  assertAccountWritable(user.email);
+}
+
 export async function updateThemePreference(userId: string, input: unknown): Promise<void> {
   const theme = z.enum(["light", "dark"]).parse(input);
+  await assertUserWritable(userId);
   await getPrisma().user.update({ where: { id: userId, status: "ACTIVE" }, data: { theme } });
 }
 
@@ -29,15 +38,18 @@ export async function rateLimit(kind: string, identifier: string, limit: number,
 
 export async function authenticate(emailInput: unknown, passwordInput: unknown) {
   const { email, password } = z.object({ email: emailSchema, password: z.string().min(1).max(128) }).parse({ email: emailInput, password: passwordInput });
-  if (!await rateLimit("login", email, 10, 15)) throw new Error("Demasiados intentos. Esperá 15 minutos.");
+  if (!canAccessDemo(email)) throw new Error("Email o contraseña incorrectos.");
+  const demo = demoAccount(email);
+  if (!demo && !await rateLimit("login", email, 10, 15)) throw new Error("Demasiados intentos. Esperá 15 minutos.");
   const user = await getPrisma().user.findUnique({ where: { email }, select: { id: true, status: true, passwordHash: true, mustChangePassword: true } });
-  const valid = await verifyPassword(password, user?.passwordHash ?? dummyHash);
-  if (!valid || !user || user.status !== "ACTIVE" || !user.passwordHash) throw new Error("Email o contraseña incorrectos.");
+  const valid = demo ? password === DEMO_PASSWORD : await verifyPassword(password, user?.passwordHash ?? dummyHash);
+  if (!valid || !user || user.status !== "ACTIVE" || (!demo && !user.passwordHash) || (demo && user.mustChangePassword)) throw new Error("Email o contraseña incorrectos.");
   return { id: user.id, verifiedPasswordHash: user.passwordHash, mustChangePassword: user.mustChangePassword };
 }
 
 export async function requestPasswordReset(emailInput: unknown) {
   const email = emailSchema.parse(emailInput);
+  if (!canModifyAccount(email)) return null;
   if (!await rateLimit("reset", email, 3, 60)) return null;
   return getPrisma().$transaction(async (db) => {
     const user = await db.user.findUnique({ where: { email }, select: { id: true, status: true } });
@@ -56,15 +68,16 @@ export async function inspectAccountToken(kind: "invitation" | "reset", token: s
     const record = await db.invitation.findUnique({ where: { tokenHash }, select: { email: true, expiresAt: true, acceptedAt: true } });
     if (!record || record.acceptedAt || record.expiresAt <= new Date()) return { valid: false };
     const user = await db.user.findUnique({ where: { email: record.email }, select: { status: true } });
-    return { valid: user?.status === "INVITED", email: record.email };
+    return { valid: user?.status === "INVITED" && canModifyAccount(record.email), email: record.email };
   }
-  const record = await db.passwordResetToken.findUnique({ where: { tokenHash }, select: { expiresAt: true, usedAt: true, user: { select: { status: true } } } });
-  return { valid: !!record && !record.usedAt && record.expiresAt > new Date() && record.user.status === "ACTIVE" };
+  const record = await db.passwordResetToken.findUnique({ where: { tokenHash }, select: { expiresAt: true, usedAt: true, user: { select: { status: true, email: true } } } });
+  return { valid: !!record && !record.usedAt && record.expiresAt > new Date() && record.user.status === "ACTIVE" && canModifyAccount(record.user.email) };
 }
 
 export async function consumeAccountToken(kind: "invitation" | "reset", tokenInput: unknown, passwordInput: unknown): Promise<void> {
   const token = tokenSchema.parse(tokenInput);
   const password = passwordSchema.parse(passwordInput);
+  if (getDemoConfig() && !(await inspectAccountToken(kind, token)).valid) throw new Error("El enlace venció o ya fue utilizado.");
   if (!await rateLimit("token", token, 8, 15)) throw new Error("Demasiados intentos. Esperá 15 minutos.");
   const passwordHash = await hashPassword(password);
   const tokenHash = hashToken(token);
@@ -76,13 +89,15 @@ export async function consumeAccountToken(kind: "invitation" | "reset", tokenInp
       if (!record || record.acceptedAt || record.expiresAt <= now) throw new Error("El enlace venció o ya fue utilizado.");
       const user = await db.user.findUnique({ where: { email: record.email } });
       if (!user || user.status !== "INVITED") throw new Error("La invitación ya no está disponible.");
+      assertAccountWritable(user.email);
       const claimed = await db.invitation.updateMany({ where: { id: record.id, acceptedAt: null, expiresAt: { gt: now } }, data: { acceptedAt: now } });
       if (claimed.count !== 1) throw new Error("El enlace ya fue utilizado.");
       userId = user.id;
       await db.user.update({ where: { id: userId }, data: { status: "ACTIVE", passwordHash, passwordChangedAt: now, mustChangePassword: false } });
     } else {
-      const record = await db.passwordResetToken.findUnique({ where: { tokenHash }, include: { user: { select: { status: true } } } });
+      const record = await db.passwordResetToken.findUnique({ where: { tokenHash }, include: { user: { select: { status: true, email: true } } } });
       if (!record || record.usedAt || record.expiresAt <= now || record.user.status !== "ACTIVE") throw new Error("El enlace venció o ya fue utilizado.");
+      assertAccountWritable(record.user.email);
       const claimed = await db.passwordResetToken.updateMany({ where: { id: record.id, usedAt: null, expiresAt: { gt: now } }, data: { usedAt: now } });
       if (claimed.count !== 1) throw new Error("El enlace ya fue utilizado.");
       userId = record.userId;
@@ -97,12 +112,14 @@ export async function consumeAccountToken(kind: "invitation" | "reset", tokenInp
 export async function changePassword(userId: string, currentInput: unknown, nextInput: unknown): Promise<void> {
   const current = z.string().min(1).max(128).parse(currentInput);
   const password = passwordSchema.parse(nextInput);
+  await assertUserWritable(userId);
   if (current === password) throw new Error("Elegí una contraseña diferente de la actual.");
   if (!await rateLimit("change", userId, 8, 15)) throw new Error("Demasiados intentos. Esperá 15 minutos.");
   const nextHash = await hashPassword(password);
   await getPrisma().$transaction(async (db) => {
     const user = await db.user.findUnique({ where: { id: userId } });
     if (!user || user.status !== "ACTIVE" || !user.passwordHash || !await verifyPassword(current, user.passwordHash)) throw new Error("La contraseña actual es incorrecta.");
+    assertAccountWritable(user.email);
     const now = new Date();
     await db.user.update({ where: { id: userId }, data: { passwordHash: nextHash, passwordChangedAt: now, mustChangePassword: false } });
     await db.session.deleteMany({ where: { userId } });

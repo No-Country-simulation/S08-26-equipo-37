@@ -72,6 +72,17 @@ test("VIEWER can read but cannot modify or administer", () => {
   }
 });
 
+test("public demo permissions remain read-only even if an administrator role is assigned", () => {
+  const demo = { ...actor(assignment("SUPER_ADMIN")), readOnly: true };
+  for (const permission of PERMISSIONS) {
+    const expected = SYSTEM_ROLES.VIEWER.includes(permission);
+    assert.equal(can(demo, permission, machineA, now), expected, permission);
+    assert.equal(hasAnyPermission(demo, permission, now), expected, permission);
+  }
+  assert.equal(canDelegate(demo, request("GLOBAL", null), SYSTEM_ROLES.VIEWER, {}, now), false);
+  assert.equal(can({ ...demo, assignments: [assignment("VIEWER", "MACHINE", "M-01")] }, "machines.view", machineB, now), false);
+});
+
 test("scope isolation applies at organization, plant, area and machine levels", () => {
   for (const [scopeType, scopeRef] of [["ORGANIZATION", "ORG-A"], ["PLANT", "PLANT-A"], ["AREA", "AREA-A"], ["MACHINE", "M-01"]]) {
     const user = actor(assignment("SUPERVISOR", scopeType, scopeRef));

@@ -12,6 +12,7 @@ export default async function Profile() {
   return <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
     <header className="mb-6 flex items-center justify-between gap-4"><Link className="text-sm font-medium text-action" href="/">← Centro de operaciones</Link><UserMenu /></header>
     <h1 className="text-2xl font-semibold tracking-tight">Mi perfil</h1>
+    {user.readOnly ? <p className="mt-4 rounded border border-default bg-subtle p-4 text-sm">Cuenta pública de demostración. El perfil, la contraseña y los datos son de solo lectura. Para ver otro tema, cerrá sesión e ingresá con la otra cuenta demo.</p> : null}
     {user.mustChangePassword ? <p className="mt-4 rounded border border-warning-border bg-warning-subtle p-4 text-sm text-warning-strong" role="alert">La administración requiere que cambies tu contraseña antes de continuar.</p> : null}
     <section className="admin-panel mt-5 flex items-center gap-4" aria-label="Datos de mi cuenta">
       {user.avatarUrl ? (
@@ -21,7 +22,7 @@ export default async function Profile() {
       ) : <span aria-hidden="true" className="grid size-12 shrink-0 place-items-center rounded-full bg-inset text-lg font-semibold text-body">{user.name.slice(0, 1).toUpperCase()}</span>}
       <div className="min-w-0"><p className="break-words text-lg font-semibold">{user.name}</p><p className="mt-1 break-words text-sm text-secondary">{user.email}</p><p className="mt-2 text-xs text-secondary">Último acceso: {user.lastLoginAt ? format.format(user.lastLoginAt) : "Sin registros"}</p></div>
     </section>
-    <section className="admin-panel mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6" aria-labelledby="profile-appearance">
+    {!user.readOnly ? <section className="admin-panel mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6" aria-labelledby="profile-appearance">
       <div>
         <h2 className="text-base font-semibold" id="profile-appearance">Apariencia</h2>
         <p className="mt-1 text-sm text-secondary">Claro por defecto. Se guarda en tu cuenta.</p>
@@ -39,14 +40,14 @@ export default async function Profile() {
           </label>
         </fieldset>
       </AccountForm>
-    </section>
+    </section> : null}
     <section className="admin-panel mt-4" aria-labelledby="profile-access"><h2 className="text-base font-semibold" id="profile-access">Mis roles y accesos</h2><p className="mt-1 text-sm text-secondary">Los cambios de permisos los realiza la administración.</p>
       <div className="mt-4 overflow-x-auto"><table className="admin-table"><thead><tr><th>Rol</th><th>Ámbito</th><th>Desde</th><th>Hasta</th><th>Estado</th></tr></thead><tbody>{user.assignments.map((item) => <tr key={item.id}><td>{item.role.name}</td><td>{item.scopeType} {item.scopeRef}</td><td>{item.validFrom ? format.format(item.validFrom) : "Sin límite"}</td><td>{item.validUntil ? format.format(item.validUntil) : "Sin límite"}</td><td>{assignmentState(user.status, item)}</td></tr>)}</tbody></table></div>
       {!user.assignments.length ? <p className="mt-4 text-sm text-secondary">No tenés accesos asignados.</p> : null}
     </section>
-    <section className="admin-panel mt-4 grid gap-5 sm:grid-cols-2 sm:gap-8" aria-labelledby="change-password"><div><h2 className="text-base font-semibold" id="change-password">Cambiar contraseña</h2><p className="mt-1 text-sm text-secondary">Usá entre 12 y 128 caracteres. Se cerrarán todas tus sesiones y deberás volver a ingresar.</p></div>
+    {!user.readOnly ? <section className="admin-panel mt-4 grid gap-5 sm:grid-cols-2 sm:gap-8" aria-labelledby="change-password"><div><h2 className="text-base font-semibold" id="change-password">Cambiar contraseña</h2><p className="mt-1 text-sm text-secondary">Usá entre 12 y 128 caracteres. Se cerrarán todas tus sesiones y deberás volver a ingresar.</p></div>
       <AccountForm action={changePasswordAction} submitLabel="Guardar contraseña"><label className="admin-label">Contraseña actual<input autoComplete="current-password" className="admin-input" maxLength={128} name="currentPassword" required type="password" /></label><label className="admin-label">Nueva contraseña<input autoComplete="new-password" className="admin-input" maxLength={128} minLength={12} name="password" required type="password" /></label></AccountForm>
-    </section>
+    </section> : null}
     <form action={logoutAction} className="mt-6"><button className="admin-button" type="submit">Cerrar sesión</button></form>
   </main>;
 }

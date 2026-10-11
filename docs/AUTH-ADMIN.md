@@ -2,7 +2,17 @@
 
 La incorporación de autenticación, usuarios, roles, accesos, auditoría y presentación de equipos fue solicitada explícitamente el 2026-09-27. La arquitectura se registra en [ADR 0007](./adr/0007-identity-administration.md). La entrega funcional local está validada; la sección final distingue la evidencia automatizada, de navegador y de correo, sin acreditar un despliegue en producción.
 
-## Límites de la entrega
+## Cierre de la simulación — 2026-10-11
+
+[ADR 0009](./adr/0009-frozen-public-demo.md) define el modo demo activado mediante `DEMO_OWNER_EMAIL=impulseguarddev@gmail.com`. Sólo el propietario conserva escritura. Las cuentas públicas `demo.light@example.com` y `demo.dark@example.com` usan los accesos publicados en el README, permisos de lectura y apariencias fijas. La cookie pública selecciona una de esas cuentas; no reutiliza sesiones del propietario ni escribe sesiones de visitantes en PostgreSQL. Las cuentas demo no tienen hash de contraseña para el ingreso normal.
+
+La política central restringe los actores públicos al catálogo `VIEWER`; las mutaciones de apariencia, contraseña, invitación y recuperación también verifican la cuenta en servidor. Los usuarios anteriores se suspenden y sus permisos y enlaces pendientes se vencen con `scripts/freeze-demo.ts`. La transacción conserva todos los registros de usuario y la autoridad del propietario; la ejecución sin `--apply` sólo informa el plan.
+
+La ausencia de escrituras corresponde al login, navegación y logout de las cuentas demo. Los intentos de autenticación y recuperación de la cuenta propietaria conservan los límites persistidos en `AuthRateLimit`, incluidos los intentos fallidos; su autenticación y administración normales continúan escribiendo.
+
+El despliegue y la prueba de cuentas públicas están pendientes. La evidencia histórica de las siguientes secciones corresponde al funcionamiento normal de identidad, fuera de esta restricción adicional.
+
+## Alcance funcional
 
 El backoffice administra identidad y presentación sobre los equipos del mock. No opera telemetría, sensores, predicciones ni órdenes de trabajo. Esos modelos ya están en el schema ([ADR 0008](./adr/0008-mvp-machine-hour-persistence.md)) y este módulo no los usa. Tampoco agrega ERP/CMMS, notificaciones push, tiempo real, SSO ni MFA. Los permisos de alertas describen capacidades del catálogo; por sí solos no implementan las operaciones de un backend de mantenimiento.
 

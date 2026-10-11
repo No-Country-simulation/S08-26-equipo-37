@@ -15,6 +15,6 @@ export function getPrisma() {
   }
 
   return (globalForPrisma.prisma ??= new PrismaClient({
-    adapter: new PrismaPg({ connectionString }),
+    adapter: new PrismaPg({ connectionString, max: 5 }),
   }));
 }
