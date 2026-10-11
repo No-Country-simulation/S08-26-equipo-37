@@ -6,7 +6,9 @@ The predictive promise still requires validation against the available data. The
 
 ## Public read-only demo
 
-The simulation has ended. The application is being frozen as a presentation demo at [predictive-maintenance.smacaya.tech](https://predictive-maintenance.smacaya.tech).
+The simulation has ended. The application is frozen as a presentation demo at [predictive-maintenance.smacaya.tech](https://predictive-maintenance.smacaya.tech).
+
+Frozen release: [v0.1.0-demo-2026-10-11](https://github.com/No-Country-simulation/S08-26-equipo-37/tree/v0.1.0-demo-2026-10-11).
 
 | Account | Public password | Appearance |
 | --- | --- | --- |
@@ -15,7 +17,7 @@ The simulation has ended. The application is being frozen as a presentation demo
 
 These are intentionally public demonstration accounts. They can browse the simulated dashboard and equipment; they cannot change data, appearance, passwords, users, roles, or images. Demo login, browsing, and logout do not write to the database. The existing owner, `impulseguarddev@gmail.com`, retains administrative access; owner authentication and recovery still persist their security throttles. Previous team accounts are suspended by the freeze operation.
 
-**Rollout status (2026-10-11):** deployment and public-account verification are pending. The GitHub CI workflow has been temporarily disabled to stop its deployment trigger. See [ADR 0009](docs/adr/0009-frozen-public-demo.md) for the freeze procedure and operational evidence.
+**Verified on 2026-10-11:** both public accounts can log in, browse and log out; PostgreSQL insert/update/delete counters remained unchanged across all 14 tables during these checks. Four previous accounts were suspended, four assignments expired, and six sessions revoked. Coolify serves the pinned commit `6d9fb01814d2ea12d36c6acf9ff05d0e75efc008`; CI remains active without a deployment job, and the repository deployment secrets have been removed. See [ADR 0009](docs/adr/0009-frozen-public-demo.md) for operational evidence and verification limits.
 
 ## Current state
 

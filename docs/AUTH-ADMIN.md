@@ -1,6 +1,6 @@
 # Identidad y administración
 
-La incorporación de autenticación, usuarios, roles, accesos, auditoría y presentación de equipos fue solicitada explícitamente el 2026-09-27. La arquitectura se registra en [ADR 0007](./adr/0007-identity-administration.md). La entrega funcional local está validada; la sección final distingue la evidencia automatizada, de navegador y de correo, sin acreditar un despliegue en producción.
+La incorporación de autenticación, usuarios, roles, accesos, auditoría y presentación de equipos fue solicitada explícitamente el 2026-09-27. La arquitectura se registra en [ADR 0007](./adr/0007-identity-administration.md). La sección final conserva la evidencia histórica local, de navegador y de correo; el cierre posterior en producción se acredita a continuación y en [ADR 0009](./adr/0009-frozen-public-demo.md).
 
 ## Cierre de la simulación — 2026-10-11
 
@@ -10,7 +10,9 @@ La política central restringe los actores públicos al catálogo `VIEWER`; las 
 
 La ausencia de escrituras corresponde al login, navegación y logout de las cuentas demo. Los intentos de autenticación y recuperación de la cuenta propietaria conservan los límites persistidos en `AuthRateLimit`, incluidos los intentos fallidos; su autenticación y administración normales continúan escribiendo.
 
-El despliegue y la prueba de cuentas públicas están pendientes. La evidencia histórica de las siguientes secciones corresponde al funcionamiento normal de identidad, fuera de esta restricción adicional.
+El cierre quedó aplicado el 2026-10-11 a las 20:15:37 de Argentina después del despliegue manual satisfactorio del commit `6d9fb01814d2ea12d36c6acf9ff05d0e75efc008`: cuatro cuentas suspendidas, cuatro asignaciones vencidas, seis sesiones revocadas y dos demos creadas. Ambas demos completaron login, navegación y logout; el perfil mostró `VIEWER GLOBAL` de lectura y `/admin` denegó el acceso. Los contadores de inserts, updates y deletes de las 14 tablas no cambiaron durante esos recorridos. El propietario fue preservado y validado por la transacción; su ingreso interactivo no se probó. Ver evidencia completa en [ADR 0009](./adr/0009-frozen-public-demo.md).
+
+La evidencia histórica de las siguientes secciones corresponde al funcionamiento normal de identidad, fuera de esta restricción adicional.
 
 ## Alcance funcional
 
