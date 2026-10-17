@@ -2,7 +2,7 @@
 
 > **Estado:** borrador para revisión del equipo. Cierra el punto 10 del backlog de [`SCOPE.md`](./SCOPE.md) y responde al issue [#14](../../issues/14).
 >
-> **Regla de uso:** ninguna métrica de este documento debe presentarse sin la limitación que la acompaña. Si una diapositiva dice PR-AUC 0,842, esta tabla es la que dice qué significa ese número y qué no.
+> **Regla de uso:** ninguna métrica de este documento debe presentarse sin la limitación que la acompaña. Si una diapositiva dice PR-AUC 0,8375, esta tabla es la que dice qué significa ese número y qué no. El 0,842 corresponde al baseline anterior a la corrección y no se cita como desempeño.
 
 > ## 🚨 Antes de mostrar cualquier métrica: la etiqueta está codificada en las features
 >
@@ -20,7 +20,7 @@
 > df["potencia_consumida_kw"] = np.where(df["estado_operativo"] == 1, potencia_base * sobreconsumo, 0.0)
 > ```
 >
-> `potencia_consumida_kw`, `potencia_nominal_kw` y `carga_pct` están en la lista blanca de [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) §4 y las tres entran al modelo, junto con `corriente_a`, que se deriva de la potencia y arrastra el mismo 15 %. **Mientras sigan ahí, ninguna métrica del baseline mide capacidad predictiva.** Detalle en §4.1 bis.
+> `potencia_consumida_kw`, `potencia_nominal_kw` y `carga_pct` están en la lista blanca de [`SPEC-MVP-PARAMETERS.md`](./SPEC-MVP-PARAMETERS.md) §4 y las tres entraron al modelo del **baseline**, junto con `corriente_a`, que se deriva de la potencia y arrastra el mismo 15 %. **Desde el PR [#47](../../pull/47) la matriz ya no incluye esas dos columnas derivadas** y el modelo se reentrenó: la métrica honesta es **0,8375**. El **generador sigue aplicando el sobreconsumo**, así que el dataset continúa contaminado para cualquier reentrenamiento desde cero ([#48](../../issues/48)). Detalle en §4.1 bis.
 >
 > Todo esto es verificable en un comando: `python3 analisis/verify-dataset-claims.py` (ver [`../analisis/README.md`](../analisis/README.md)).
 
@@ -28,7 +28,7 @@
 
 | Afirmación | Estado | Por qué |
 | --- | --- | --- |
-| Un modelo de clasificación de falla a 48 h **mide capacidad predictiva** sobre este dataset | **No** | La etiqueta se recupera de las features con una regla determinista (§4.1 bis): las métricas están infladas |
+| Un modelo de clasificación de falla a 48 h **mide capacidad predictiva** sobre este dataset | **Parcialmente** | El modelo servido ([#47](../../pull/47)) ya no usa las columnas derivadas del target y mide **0,8375**; el dataset sigue conteniendo el sobreconsumo ([#48](../../issues/48)) y el filtro de limpieza descarta 130 de 261 eventos ([#10](../../issues/10)) |
 | Un modelo de clasificación de falla a 48 h es viable sobre este dataset | **Pendiente** | Lo será cuando se reentrene sin las columnas que filtran, y ahí se sabrá el número real |
 | El modelo predice fallas en una planta real | **No** | El dataset es sintético: el modelo aprendió la física de un simulador |
 | Existe una probabilidad calibrada de falla | **No** | El umbral y la calibración no están definidos en el producto |
@@ -207,7 +207,7 @@ Como `potencia_base = potencia_nominal_kw * (0.12 + 0.88 * carga_pct / 100)`, el
 
 Por qué importa tanto:
 
-- **Las métricas del baseline no miden capacidad predictiva.** PR-AUC 0,842, recall 0,88 y precision 0,69 salen de un modelo que tiene acceso a una señal que revela el target. Que no llegue a 1,00 se explica porque un árbol aproxima mal un cociente, no porque no tenga el dato.
+- **Las métricas del baseline no miden capacidad predictiva.** El PR-AUC 0,842 del baseline (recall 0,88, precision 0,69) sale de un modelo que tiene acceso a una señal que revela el target: que no llegue a 1,00 se explica porque un árbol aproxima mal un cociente, no porque no tenga el dato. **Con el [#47](../../pull/47) esa señal salió de la matriz** y el modelo servido mide **0,8375**, que es el número que se cita.
 - **La prueba de permutación no podía detectarlo.** Romper la temperatura no bajaba el score porque el modelo no dependía de la física: tenía el cociente.
 - **Ninguna de las auditorías hechas hasta ahora lo habría encontrado.** No es una columna con AUC alto —`corriente_a` mide 0,451 y `carga_pct` 0,421— ni un valor con tasa de positivos anómala. La fuga vive en una **relación** entre columnas, y eso lo único que lo detecta es intentar **reconstruir el target desde el conjunto de features**.
 - **Sobrevive a la limpieza actual**: el filtro quitó las filas de máquina apagada y la imputación tocó los nulos, pero las dos columnas que arrastran el 15 % siguen en la matriz de 42 features.
@@ -302,7 +302,7 @@ Es una ceguera operativa, no un detalle de implementación: en planta, buena par
 
 | Limitación | Qué haría falta | Dónde |
 | --- | --- | --- |
-| §4.1 bis etiqueta dentro de las features | **Excluir `potencia_consumida_kw` y `corriente_a` (o regenerar el dataset sin el `sobreconsumo`) y reentrenar. Es la prioridad: sin esto, ninguna métrica vale.** Estimación medida sin esas columnas: AUC ≈ 0,94 (§4.1 bis) | [#13](../../issues/13), [#10](../../issues/10) |
+| §4.1 bis etiqueta dentro de las features | **Hecho en el modelo ([#47](../../pull/47), 01/10):** `potencia_consumida_kw` y `corriente_a` salieron de la matriz y el modelo se reentrenó; mide **0,8375** con partición temporal. **Sigue pendiente el origen:** regenerar el dataset sin el `sobreconsumo` del generador ([#48](../../issues/48)) y corregir el filtro de limpieza ([#10](../../issues/10)) | [#48](../../issues/48), [#10](../../issues/10) |
 | §3.7 la mitad de las fallas borradas | Corregir el filtro: no descartar las filas de parada que *son* el evento de falla, o al menos conservar el disparo | [#10](../../issues/10), [#13](../../issues/13) |
 | §3.7 imputación sin trazabilidad | Imputar con flag o dejar el NULL, como pide `SPEC-MVP-PARAMETERS.md` §6 | [#10](../../issues/10) |
 | §3.7 enero sin fallas y tasa base del test | Reportar métricas por mes y no solo en abril, o excluir enero del entrenamiento | [#13](../../issues/13) |
@@ -319,9 +319,9 @@ Es una ceguera operativa, no un detalle de implementación: en planta, buena par
 
 ## 7. Cómo citar este trabajo
 
-**Mientras §4.1 bis siga abierto, no hay métrica del baseline que se pueda citar como capacidad predictiva.** La forma honesta de describir el estado es:
+**§4.1 bis quedó resuelto en el modelo con el [#47](../../pull/47): la matriz ya no usa las columnas derivadas del target y la métrica que se cita es 0,8375.** Lo que sigue abierto es el origen: el generador continúa aplicando el sobreconsumo ([#48](../../issues/48)) y el filtro de limpieza descarta 130 de 261 eventos ([#10](../../issues/10)). La forma honesta de describir el estado es:
 
-> Tenemos un pipeline completo —dataset, limpieza, features, modelo y API— y un control de calidad que encontró que **la etiqueta del simulador está codificada en dos de las features**: una regla aritmética sobre `potencia_consumida_kw`, `potencia_nominal_kw` y `carga_pct` reproduce el target con precisión y recall de 1,000. Las métricas publicadas (PR-AUC 0,842) están infladas por eso y **no deben presentarse como desempeño** hasta reentrenar sin esas columnas. Los límites del dataset y del modelo están documentados en este archivo.
+> Tenemos un pipeline completo —dataset, limpieza, features, modelo y API— y un control de calidad que encontró que **la etiqueta del simulador está codificada en dos de las features**: una regla aritmética sobre `potencia_consumida_kw`, `potencia_nominal_kw` y `carga_pct` reproduce el target con precisión y recall de 1,000. **Eso se corrigió en el modelo**: desde el [#47](../../pull/47) esas columnas no entran en la matriz y el modelo mide **0,8375** con partición temporal. El **generador sigue aplicando el sobreconsumo**, así que el dataset tiene que regenerarse antes de cualquier reentrenamiento desde cero ([#48](../../issues/48)). Los límites del dataset y del modelo están documentados en este archivo.
 
 Si en algún momento se reentrena sin las columnas que filtran, la frase vuelve a admitir métricas, con estas salvedades: el dataset es **sintético** (25 máquinas, 4 meses), las fallas vienen en ráfagas (mediana de 16 h entre disparos, así que los "261 eventos" no son independientes), **el recall se mide por hora y no por falla** —y la diferencia es de un factor de 3: 0,87 por fila contra 19–33 % de eventos (§4.2 y §4.4)—, el test tiene casi el doble de tasa base que el entrenamiento, y sigue pendiente la calibración del umbral.
 

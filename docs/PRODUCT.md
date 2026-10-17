@@ -27,7 +27,7 @@ Estas decisiones se detallan y priorizan en [OPEN-QUESTIONS.md](./OPEN-QUESTIONS
 
 ## Fuera de alcance inicial
 
-- Prometer probabilidad de falla, tiempo hasta la falla o vida útil remanente **más allá de lo que los datos sostienen**. Hoy hay evidencia para una probabilidad a 48 h (PR-AUC 0,842 con partición temporal, precision 0,69) y **no** para RUL continuo, que está censurado en el dataset. Ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md).
+- Prometer probabilidad de falla, tiempo hasta la falla o vida útil remanente **más allá de lo que los datos sostienen**. Hoy hay evidencia para una probabilidad a 48 h (PR-AUC **0,8375** con partición temporal, sin las columnas derivadas del target, precision 0,69) y **no** para RUL continuo, que está censurado en el dataset. Ver [`MODEL-LIMITATIONS.md`](./MODEL-LIMITATIONS.md).
 - Automatizar decisiones o intervenciones de mantenimiento.
 - Diseñar un dashboard final, reglas de negocio o modelos de dominio ficticios.
 - Autenticación, notificaciones, tiempo real y MLOps antes de que exista una necesidad validada. Existe un **prototipo local** de servicio predictivo en `ml/api` (FastAPI + LightGBM) que **no se despliega**: no tiene Dockerfile, no está en `compose.yaml` y ningún workflow lo construye. Ver [`ARCHITECTURE.md`](./ARCHITECTURE.md).
