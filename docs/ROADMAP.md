@@ -26,7 +26,7 @@ Esta tabla registra **evidencia**, no cierres: el cierre de cada fase lo confirm
 | **F1** Exploración del dataset | Diccionario en [`../ml/README.md`](../ml/README.md), generador reproducible (SEED 42), dataset v2 validado en CI, problema elegido (falla binaria a 48 h). Falta el perfil contra la ground truth ([#10](../../issues/10)) | Criterio casi cumplido |
 | **F2** Inventario de máquinas | Catálogo de las 25 máquinas en la interfaz, sobre datos simulados. El modelo `Activo` ya está en el schema ([ADR 0008](./adr/0008-mvp-machine-hour-persistence.md)); el seed sobre base real no existe ([#16](../../issues/16)) | Pendiente |
 | **F3** Visualización de sensores | Vista temporal con unidades y manejo de nulos, con datos simulados ([#17](../../issues/17)) | Parcial |
-| **F4** Baseline de condición | LightGBM con PR-AUC 0,842 y partición temporal; limitaciones documentadas. Faltan matriz de confusión, split por máquina y comparación contra el calendario ([#13](../../issues/13)) | Parcial |
+| **F4** Baseline de condición | LightGBM con PR-AUC **0,8375** (sin las columnas derivadas del target, [#47](../../pull/47)) y partición temporal; limitaciones documentadas. Faltan matriz de confusión, split por máquina y comparación contra el calendario ([#13](../../issues/13)) | Parcial |
 | **F5** Priorización de riesgo | Lista priorizada en la interfaz, con un índice que **no** es una probabilidad ([#18](../../issues/18)) | Parcial |
 | **F6** Alertas | No iniciada. El centro de notificaciones de la PWA es simulado ([#20](../../issues/20)) | Pendiente |
 | **F7** Feedback de mantenimiento | No iniciada ([#21](../../issues/21)) | Pendiente |
