@@ -15,17 +15,17 @@
 
 ## 1. Estado vigente
 
-**Estado de la simulación laboral:** Finalizada (2026-10-02).
+**Estado de la simulación laboral:** entrega cerrada el **02/10/2026** (Demo Day); el cierre de la plataforma quedó fijado para el **05/10/2026 a las 23:59 (hora de Argentina)**, que por la diferencia horaria el listado de la plataforma muestra como 06/10. La fecha que se registra es la del cierre: **05/10/2026**.
 
 ### Roles durante la simulación
 
-Integrante | Rol
---- | ---
-Héctor Medina Rodríguez |  Project Manager & Data Analyst
-Sebastián Macaya | Software Engineer
-Pedro L. Acosta Pérez | Data Analyst & Project Manager
-Flavio Taya Ramos | Machine Learning Engineer
-Diego Borges Salces | Backend Developer
+| Integrante | Rol |
+| --- | --- |
+| Héctor Medina Rodríguez |  Project Manager & Data Analyst |
+| Sebastián Macaya | Software Engineer |
+| Pedro L. Acosta Pérez | Data Analyst & Project Manager |
+| Flavio Taya Ramos | Machine Learning Engineer |
+| Diego Borges Salces | Backend Developer |
 
 ### Estado del proyecto al cierre de la simulación
 
@@ -39,11 +39,11 @@ Diego Borges Salces | Backend Developer
 
 ## 2. Minuta — Demo Day y cierre de la simulación (2026-10-02)
 
-Campo | Valor
---- | ---
-Fecha | Viernes 02/10/2026
-Modalidad | Voz (sesión a través de Meet)
-Asistentes | Pedro y Héctor
+| Campo | Valor |
+| --- | --- |
+| Fecha | Viernes 02/10/2026 |
+| Modalidad | Voz (sesión a través de Meet) |
+| Asistentes | Pedro y Héctor |
 
 ### Temas tratados y acuerdos
 
@@ -56,19 +56,24 @@ Asistentes | Pedro y Héctor
 
 | # | Acción | Responsable | Estado |
 | --- | --- | --- | --- |
-A1 | Subir la versión final del video a la plataforma de NoCountry | Héctor | Completada
-A2 | Completar la publicación de los cuatro entregables asignados | Equipo | Completada
+| A1 | Subir la versión final del video a la plataforma de NoCountry | Héctor | Completada |
+| A2 | Completar la publicación de los cuatro entregables asignados | Equipo | Completada |
+
+### Pendientes
+
+- **Cierre administrativo de la simulación** el **05/10/2026 a las 23:59 (hora de Argentina)** — el listado de la plataforma lo muestra como 06/10 por la zona horaria.
+- Lo que quedó fuera del alcance presentado y sigue abierto: la migración de mantenimiento a PostgreSQL ([#15](../../issues/15)), la integración del prototipo de inferencia con la aplicación y la regeneración del dataset ([#48](../../issues/48)).
 
 ---
 
 ## 3. Minuta — Pre-demo meet (2026-10-01)
 
-Campo | Valor
---- | ---
-Fecha | Jueves 01/10/2026
-Modalidad | Asincrónica, mediante los canales de texto de Discord
-Asistentes | Héctor, Sebastián, Pedro, Flavio y Diego
-Ausentes | Denisse y Lucas
+| Campo | Valor |
+| --- | --- |
+| Fecha | Jueves 01/10/2026 |
+| Modalidad | Asincrónica, mediante los canales de texto de Discord |
+| Asistentes | Héctor, Sebastián, Pedro, Flavio y Diego |
+| Ausentes | Denisse y Lucas |
 
 ### Temas tratados y acuerdos
 
@@ -80,19 +85,23 @@ Ausentes | Denisse y Lucas
 
 | # | Acción | Responsable | Estado |
 | --- | --- | --- | --- |
-A1 | Incorporar las modificaciones propuestas al video y preparar la versión final | Héctor | Pendiente al cierre de la sesión
-A2 | Publicar el video final en la plataforma de NoCountry | Héctor | Pendiente al cierre de la sesión
+| A1 | Incorporar las modificaciones propuestas al video y preparar la versión final | Héctor | Pendiente al cierre de la sesión |
+| A2 | Publicar el video final en la plataforma de NoCountry | Héctor | Pendiente al cierre de la sesión |
+
+### Pendientes
+
+- **A1 y A2** (modificaciones y publicación del video final) se cerraron el **02/10**, según la minuta del Demo Day.
 
 ---
 
 ## 4. Minuta — Planeación del sprint final (2026-09-28)
 
-Campo | Valor
---- | ---
-Fecha | Lunes 28/09/2026
-Modalidad | Voz y texto
-Asistentes | Héctor, Sebastián, Pedro y Flavio
-Ausentes | Diego, Denisse y Lucas
+| Campo | Valor |
+| --- | --- |
+| Fecha | Lunes 28/09/2026 |
+| Modalidad | Voz y texto |
+| Asistentes | Héctor, Sebastián, Pedro y Flavio |
+| Ausentes | Diego, Denisse y Lucas |
 
 ### Temas tratados y acuerdos
 
@@ -112,22 +121,30 @@ Ausentes | Diego, Denisse y Lucas
 
 | # | Acción | Responsable | Estado |
 | --- | --- | --- | --- |
-A1 | Implementar el modo oscuro como alternativa al modo claro | Sebastián | Propuesta presentada; implementación pendiente al cierre de la reunión
-A2 | Revisar y ajustar el borrador del Entregable 1 | Pedro / Héctor | En revisión
-A3 | Grabar el video de presentación siguiendo el guion acordado | Héctor | Pendiente
-A4 | Ajustar el esquema de datos según las observaciones de Sebastián | Diego | Pendiente
-A5 | Validar la consistencia del modelo actualizado y de sus características de entrada | Flavio | Prueba de consistencia reportada como realizada
+| A1 | Implementar el modo oscuro como alternativa al modo claro | Sebastián | Propuesta presentada; implementación pendiente al cierre de la reunión |
+| A2 | Revisar y ajustar el borrador del Entregable 1 | Pedro / Héctor | En revisión |
+| A3 | Grabar el video de presentación siguiendo el guion acordado | Héctor | Pendiente |
+| A4 | Ajustar el esquema de datos según las observaciones de Sebastián | Diego | Pendiente |
+| A5 | Validar la consistencia del modelo actualizado y de sus características de entrada | Flavio | Prueba de consistencia reportada como realizada |
+
+### Pendientes
+
+- **A2** (ajustes del Entregable 1) cerró con la revisión y la publicación del 02/10.
+- **A3** (video) se cerró el 01/10.
+- **A4** (esquema de datos) se resolvió con el [#57](../../pull/57), mergeado el **04/10**.
+- **A5** (validación del modelo) quedó cerrada con el [#47](../../pull/47).
+- **Sigue abierto lo que depende del origen de los datos:** regenerar el dataset ([#48](../../issues/48)) y corregir el filtro de limpieza ([#10](../../issues/10)).
 
 ---
 
 ## 5. Minuta — Cierre del sprint (2026-09-24)
 
-Campo | Valor
---- | ---
-Fecha | Jueves 24/09/2026
-Modalidad | Asincrónica, mediante los canales de texto de Discord
-Asistentes | Participación por Discord; lista de participantes por confirmar
-Ausentes | Por confirmar
+| Campo | Valor |
+| --- | --- |
+| Fecha | Jueves 24/09/2026 |
+| Modalidad | Asincrónica: no se celebró reunión de voz. El cierre del sprint y el plan de la semana se comunicaron por escrito, en los canales de texto de Discord |
+| Asistentes | Héctor, Sebastián, Pedro, Flavio y Diego |
+| Ausentes | Denisse y Lucas |
 
 ### Temas tratados y acuerdos
 
@@ -139,19 +156,23 @@ Ausentes | Por confirmar
 
 | # | Acción | Responsable | Estado |
 | --- | --- | --- | --- |
-A1 | Acompañar a Pedro en las tareas de coordinación cuando lo requiera | Héctor | Compromiso asumido (23/09/2026)
-A2 | Diseñar el modelo de datos, identificar entidades y relaciones y proponer un esquema PostgreSQL compatible con Prisma ORM | Diego | Asignada (23/09/2026)
+| A1 | Acompañar a Pedro en las tareas de coordinación cuando lo requiera | Héctor | Compromiso asumido (23/09/2026) |
+| A2 | Diseñar el modelo de datos, identificar entidades y relaciones y proponer un esquema PostgreSQL compatible con Prisma ORM | Diego | Asignada (23/09/2026) |
+
+### Pendientes
+
+- **A2** (modelo de datos) se resolvió con el [#57](../../pull/57), con Diego como autor y Pedro como coautor.
 
 ---
 
 ## 6. Minuta — Sprint planning extraordinario (2026-09-22)
 
-Campo | Valor
---- | ---
-Fecha | Martes 22/09/2026
-Modalidad | Voz
-Asistentes | Héctor, Sebastián y Pedro
-Ausentes | Denisse, Lucas, Flavio y Diego
+| Campo | Valor |
+| --- | --- |
+| Fecha | Martes 22/09/2026 |
+| Modalidad | Voz |
+| Asistentes | Héctor, Sebastián y Pedro |
+| Ausentes | Denisse, Lucas, Flavio y Diego |
 
 ### Temas tratados y acuerdos
 
@@ -170,22 +191,31 @@ Ausentes | Denisse, Lucas, Flavio y Diego
 
 | # | Acción | Responsable | Estado |
 | --- | --- | --- | --- |
-A1 | Definir la asignación del rol de PM y las responsabilidades de coordinación | Equipo | Propuesta presentada; pendiente de aprobación
-A2 | Validar el dataset y el modelo de predicción | Célula de datos | Pendiente
-A3 | Construir la base de datos | Responsable por confirmar | Pendiente
-A4 | Integrar los componentes frontend y backend | Equipo de desarrollo | Pendiente
-A5 | Definir el criterio de limpieza del dataset y el alcance del reentrenamiento | Célula de datos | Pendiente de decisión
-A6 | Articular el dataset, la base de datos, las entradas del pipeline, el repositorio y CI | Diego | Misión propuesta; pendiente de aceptación
+| A1 | Definir la asignación del rol de PM y las responsabilidades de coordinación | Equipo | Propuesta presentada; pendiente de aprobación |
+| A2 | Validar el dataset y el modelo de predicción | Célula de datos | Pendiente |
+| A3 | Construir la base de datos | Responsable por confirmar | Pendiente |
+| A4 | Integrar los componentes frontend y backend | Equipo de desarrollo | Pendiente |
+| A5 | Definir el criterio de limpieza del dataset y el alcance del reentrenamiento | Célula de datos | Pendiente de decisión |
+| A6 | Articular el dataset, la base de datos, las entradas del pipeline, el repositorio y CI | Diego | Misión propuesta; pendiente de aceptación |
+
+### Pendientes
+
+- **A1** (rol de PM): aprobado el 23/09 y registrado en la minuta del cierre del sprint.
+- **A2** (validar dataset y modelo): el modelo se corrigió y se reentrenó ([#47](../../pull/47)); la validación del dataset sigue abierta ([#48](../../issues/48), [#10](../../issues/10)).
+- **A3** (base de datos): **sigue pendiente** — la migración de mantenimiento no está generada ni aplicada ([#15](../../issues/15)).
+- **A4** (integración frontend/backend): **sigue pendiente**; quedó fuera del alcance presentado.
+- **A5** (criterio de limpieza): **abierta**, en [#10](../../issues/10).
+- **A6** (articulación de las tres piezas): entregada como esquema en el [#57](../../pull/57); la importación del dataset a PostgreSQL sigue pendiente.
 
 ---
 
 ## 7. Registro — Sesión ordinaria de planeación no realizada (2026-09-21)
 
-Campo | Valor
---- | ---
-Fecha | Lunes 21/09/2026
-Carácter | Sesión ordinaria de planeación
-Estado | No se realizó la sesión
+| Campo | Valor |
+| --- | --- |
+| Fecha | Lunes 21/09/2026 |
+| Carácter | Sesión ordinaria de planeación |
+| Estado | No se realizó la sesión |
 
 No se celebró la sesión ordinaria de planeación prevista para esta fecha.
 
