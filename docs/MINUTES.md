@@ -15,7 +15,7 @@
 
 ## 1. Estado vigente
 
-**Estado de la simulación laboral:** entrega cerrada el **02/10/2026** (Demo Day); la ventana de la plataforma cerró el **06/10/2026**.
+**Estado de la simulación laboral:** entrega cerrada el **02/10/2026** (Demo Day); el cierre de la plataforma quedó fijado para el **05/10/2026 a las 23:59 (hora de Argentina)**, que por la diferencia horaria el listado de la plataforma muestra como 06/10. La fecha que se registra es la del cierre: **05/10/2026**.
 
 ### Roles durante la simulación
 
@@ -61,7 +61,7 @@
 
 ### Pendientes
 
-- **Cierre administrativo de la simulación** el **06/10/2026** (fecha de la plataforma).
+- **Cierre administrativo de la simulación** el **05/10/2026 a las 23:59 (hora de Argentina)** — el listado de la plataforma lo muestra como 06/10 por la zona horaria.
 - Lo que quedó fuera del alcance presentado y sigue abierto: la migración de mantenimiento a PostgreSQL ([#15](../../issues/15)), la integración del prototipo de inferencia con la aplicación y la regeneración del dataset ([#48](../../issues/48)).
 
 ---
@@ -131,7 +131,7 @@
 
 - **A2** (ajustes del Entregable 1) cerró con la revisión y la publicación del 02/10.
 - **A3** (video) se cerró el 01/10.
-- **A4** (esquema de datos) se resolvió con el [#57](../../pull/57), mergeado el 01/10.
+- **A4** (esquema de datos) se resolvió con el [#57](../../pull/57), mergeado el **04/10**.
 - **A5** (validación del modelo) quedó cerrada con el [#47](../../pull/47).
 - **Sigue abierto lo que depende del origen de los datos:** regenerar el dataset ([#48](../../issues/48)) y corregir el filtro de limpieza ([#10](../../issues/10)).
 
@@ -142,9 +142,9 @@
 | Campo | Valor |
 | --- | --- |
 | Fecha | Jueves 24/09/2026 |
-| Modalidad | Asincrónica, mediante los canales de texto de Discord |
-| Asistentes | Participación por Discord; lista de participantes por confirmar |
-| Ausentes | Por confirmar |
+| Modalidad | Asincrónica: no se celebró reunión de voz. El cierre del sprint y el plan de la semana se comunicaron por escrito, en los canales de texto de Discord |
+| Asistentes | Héctor, Sebastián, Pedro, Flavio y Diego |
+| Ausentes | Denisse y Lucas |
 
 ### Temas tratados y acuerdos
 
@@ -161,7 +161,6 @@
 
 ### Pendientes
 
-- **Confirmar la lista de asistentes del 24/09**: el registro la deja abierta («por confirmar»).
 - **A2** (modelo de datos) se resolvió con el [#57](../../pull/57), con Diego como autor y Pedro como coautor.
 
 ---
