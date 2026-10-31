@@ -52,7 +52,7 @@ six==1.17.0
 stack-data==0.6.3
 starlette==1.6.0
 threadpoolctl==3.7.0
-tornado==6.5.10
+tornado==6.6
 traitlets==5.16.1
 typing-inspection==0.4.4
 typing_extensions==4.16.0
